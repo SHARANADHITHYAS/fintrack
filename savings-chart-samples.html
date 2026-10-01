@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FinTrack – savings trend chart samples</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Plus Jakarta Sans',system-ui,sans-serif;background:var(--page);color:var(--text);transition:background .3s}
+body[data-mode="light"]{--page:#eef0fb;--card:#ffffff;--border:#e6e8f5;--text:#1b1b3a;--muted:#6b6f91;--grid:#eceef8;
+  --inc:#10b981;--exp:#f43f5e;--inv:#8b5cf6;--net:#3b82f6;--warn:#f59e0b;--incSoft:#d1fae5;--netSoft:#dbeafe;--warnSoft:#fef3c7;--track:#eef0f8}
+body[data-mode="dark"]{--page:#07061a;--card:#131230;--border:#25234f;--text:#ecebff;--muted:#a09fc6;--grid:#23214a;
+  --inc:#34d399;--exp:#fb7185;--inv:#a78bfa;--net:#60a5fa;--warn:#fbbf24;--incSoft:rgba(52,211,153,.16);--netSoft:rgba(96,165,250,.16);--warnSoft:rgba(251,191,36,.16);--track:#23214a}
+.top{position:sticky;top:0;z-index:5;display:flex;justify-content:center;gap:8px;padding:12px;background:#111;color:#fff;font-size:13px;align-items:center}
+.top button{font:inherit;padding:7px 14px;border-radius:999px;border:1px solid #444;background:#1d1d1d;color:#fff;cursor:pointer}
+.top button.on{background:#fff;color:#111}
+.wrap{max-width:1180px;margin:26px auto;padding:0 20px}
+.intro{font-size:14px;color:var(--muted);margin-bottom:18px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+@media(max-width:860px){.grid{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:18px 18px 14px;box-shadow:0 10px 30px -18px rgba(76,70,180,.35)}
+.head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:8px}
+.num{font-size:12px;font-weight:700;color:var(--net);background:var(--netSoft);padding:3px 9px;border-radius:999px;white-space:nowrap}
+.title{font-weight:700;font-size:16px}
+.hint{font-size:12.5px;color:var(--muted);margin-top:2px}
+.good{font-size:12px;color:var(--muted);margin-top:8px;padding-top:8px;border-top:1px dashed var(--border)}
+.good b{color:var(--text);font-weight:600}
+svg{display:block;width:100%;height:auto;overflow:visible}
+svg text{font-family:inherit}
+.legend{display:flex;gap:14px;font-size:12px;color:var(--muted);margin-top:4px;flex-wrap:wrap}
+.dot{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:5px}
+.ringRow{display:flex;align-items:center;gap:22px;padding:6px 4px}
+.ringTxt .big{font-size:26px;font-weight:700}
+.ringTxt .sm{font-size:13px;color:var(--muted)}
+.pill{display:inline-block;margin-top:8px;font-size:12px;font-weight:600;padding:4px 10px;border-radius:999px;background:var(--warnSoft);color:var(--warn)}
+</style>
+</head>
+<body data-mode="light">
+<div class="top">Mode:
+  <button data-m="light" class="on">☀ Light</button>
+  <button data-m="dark">☾ Dark</button>
+</div>
+
+<div class="wrap">
+  <p class="intro">Same sample data in every chart: Apr–Sep income ₹38k–₹42k, expenses ₹24k–₹31k, investments ₹6k–₹8k, and net savings of ₹3k–₹7k a month. Hover over a chart for exact values. You can pick one or combine two, for example a main chart plus a small ring.</p>
+  <div class="grid">
+    <div class="card"><div class="head"><div><div class="title">Smooth area line</div><div class="hint">You saved more in 4 of the last 6 months. Keep it rolling.</div></div><span class="num">A</span></div><div id="c1"></div><div class="good"><b>Good for:</b> a calm, simple view of the ups and downs.</div></div>
+
+    <div class="card"><div class="head"><div><div class="title">Monthly savings vs your goal</div><div class="hint">Green months beat your ₹5k goal, amber months fell a little short.</div></div><span class="num">B</span></div><div id="c2"></div><div class="legend"><span><i class="dot" style="background:var(--inc)"></i>Goal hit</span><span><i class="dot" style="background:var(--warn)"></i>Below goal</span><span>- - - Goal ₹5k</span></div><div class="good"><b>Good for:</b> motivation. You see at a glance which months hit the target.</div></div>
+
+    <div class="card"><div class="head"><div><div class="title">Total saved so far (cumulative)</div><div class="hint">₹30.6k saved since April. Every month adds a brick.</div></div><span class="num">C</span></div><div id="c3"></div><div class="good"><b>Good for:</b> a feel-good view. This line only goes up while you keep saving.</div></div>
+
+    <div class="card"><div class="head"><div><div class="title">Savings rate %</div><div class="hint">The share of income you kept each month. The shaded band is the healthy 10–20% zone.</div></div><span class="num">D</span></div><div id="c4"></div><div class="good"><b>Good for:</b> comparing months fairly even when income changes.</div></div>
+
+    <div class="card"><div class="head"><div><div class="title">Where each ₹100 of income went</div><div class="hint">Expense, invest and save split per month (100% stacked).</div></div><span class="num">E</span></div><div id="c5"></div>
+      <div class="legend"><span><i class="dot" style="background:var(--exp)"></i>Expense</span><span><i class="dot" style="background:var(--inv)"></i>Invested</span><span><i class="dot" style="background:var(--inc)"></i>Saved</span></div>
+      <div class="good"><b>Good for:</b> seeing the whole picture in one chart.</div></div>
+
+    <div class="card"><div class="head"><div><div class="title">September money flow (waterfall)</div><div class="hint">From income down to what you actually kept.</div></div><span class="num">F</span></div><div id="c6"></div><div class="good"><b>Good for:</b> a clear story of the current month, step by step.</div></div>
+
+    <div class="card"><div class="head"><div><div class="title">Goal ring with mini trend</div><div class="hint">This month's progress towards your savings goal.</div></div><span class="num">G</span></div>
+      <div class="ringRow"><div id="c7ring" style="width:150px;flex-shrink:0"></div>
+        <div class="ringTxt" style="flex:1;min-width:0"><div class="big">₹5.6k <span style="font-size:15px;color:var(--muted);font-weight:500">of ₹8k</span></div><div class="sm">₹2.4k more to hit September's goal</div><span class="pill">8 days left, you've got this</span><div id="c7spark" style="margin-top:12px"></div></div></div>
+      <div class="good"><b>Good for:</b> a compact widget on mobile or at the top of the dashboard.</div></div>
+
+    <div class="card"><div class="head"><div><div class="title">Month-over-month change</div><div class="hint">How much more (or less) you saved than the month before.</div></div><span class="num">H</span></div><div id="c8"></div><div class="good"><b>Good for:</b> spotting momentum. Green means improving, red means slipping.</div></div>
+  </div>
+</div>
+
+<script>
+const M=['Apr','May','Jun','Jul','Aug','Sep'];
+const inc=[38,40,39,41,40,42], exp=[24,31,26,29,25,28.4], inv=[8,6,8,8,8,8];
+const sav=inc.map((v,i)=>+(v-exp[i]-inv[i]).toFixed(1));
+const cum=sav.reduce((a,v)=>(a.push(+((a.at(-1)||0)+v).toFixed(1)),a),[]);
+const rate=sav.map((v,i)=>+(v/inc[i]*100).toFixed(1));
+const k=v=>(Math.abs(v)>=1?(+v.toFixed(1))+'k':(v*1000).toFixed(0));
+const W=520,H=210,L=46,R=16,T=18,B=30;
+const iw=W-L-R, ih=H-T-B;
+const xp=i=>L+i*iw/(M.length-1);
+const xb=(i,n=M.length)=>L+iw/n*(i+.5);
+const y=(v,max,min=0)=>T+(1-(v-min)/(max-min))*ih;
+function smooth(pts){let d=`M${pts[0][0]},${pts[0][1]}`;for(let i=0;i<pts.length-1;i++){const p0=pts[i-1]||pts[i],p1=pts[i],p2=pts[i+1],p3=pts[i+2]||p2;
+  const c1=[p1[0]+(p2[0]-p0[0])/6,p1[1]+(p2[1]-p0[1])/6],c2=[p2[0]-(p3[0]-p1[0])/6,p2[1]-(p3[1]-p1[1])/6];d+=` C${c1} ${c2} ${p2}`}return d}
+function axes(max,step,min=0,fmt=v=>'₹'+k(v)){let s='';for(let v=min;v<=max+1e-9;v+=step){const yy=y(v,max,min);
+  s+=`<line x1="${L}" x2="${W-R}" y1="${yy}" y2="${yy}" stroke="var(--grid)" ${v===0&&min<0?'stroke-width="1.5" stroke="var(--muted)" stroke-opacity=".4"':''}/><text x="${L-8}" y="${yy+4}" text-anchor="end" font-size="11" fill="var(--muted)">${fmt(v)}</text>`}return s}
+function months(pos){return M.map((m,i)=>`<text x="${pos(i)}" y="${H-8}" text-anchor="middle" font-size="12" fill="${i===5?'var(--text)':'var(--muted)'}" font-weight="${i===5?700:400}">${m}</text>`).join('')}
+const svg=(inner,h=H)=>`<svg viewBox="0 0 ${W} ${h}">${inner}</svg>`;
+
+/* A smooth area */
+(()=>{const max=10,pts=sav.map((v,i)=>[xp(i),y(v,max)]);const d=smooth(pts);
+document.getElementById('c1').innerHTML=svg(`<defs><linearGradient id="g1" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="var(--net)" stop-opacity=".35"/><stop offset="1" stop-color="var(--net)" stop-opacity="0"/></linearGradient></defs>
+${axes(max,2.5)}<path d="${d} L${xp(5)},${y(0,max)} L${xp(0)},${y(0,max)}Z" fill="url(#g1)"/><path d="${d}" fill="none" stroke="var(--net)" stroke-width="3" stroke-linecap="round"/>
+${pts.map((p,i)=>`<circle cx="${p[0]}" cy="${p[1]}" r="${i===5?6:4}" fill="var(--card)" stroke="var(--net)" stroke-width="2.5"><title>${M[i]}: ₹${k(sav[i])}</title></circle>`).join('')}
+<rect x="${xp(5)-46}" y="${pts[5][1]-34}" width="52" height="22" rx="8" fill="var(--net)"/><text x="${xp(5)-20}" y="${pts[5][1]-19}" text-anchor="middle" font-size="12" font-weight="700" fill="#fff">₹${k(sav[5])}</text>${months(xp)}`)})();
+
+/* B bars vs goal */
+(()=>{const max=10,goal=5,bw=34;
+document.getElementById('c2').innerHTML=svg(`${axes(max,2.5)}
+${sav.map((v,i)=>{const ok=v>=goal,c=ok?'var(--inc)':'var(--warn)';return `<rect x="${xb(i)-bw/2}" y="${y(v,max)}" width="${bw}" height="${y(0,max)-y(v,max)}" rx="9" fill="${c}"><title>${M[i]}: ₹${k(v)} ${ok?'(goal hit)':'(below goal)'}</title></rect><text x="${xb(i)}" y="${y(v,max)-7}" text-anchor="middle" font-size="12" font-weight="700" fill="${c}">₹${k(v)}</text>`}).join('')}
+<line x1="${L}" x2="${W-R}" y1="${y(goal,max)}" y2="${y(goal,max)}" stroke="var(--text)" stroke-width="1.5" stroke-dasharray="6 5" opacity=".55"/>
+${months(xb)}`)})();
+
+/* C cumulative */
+(()=>{const max=35,pts=cum.map((v,i)=>[xp(i),y(v,max)]),d=smooth(pts),mile=25;
+document.getElementById('c3').innerHTML=svg(`<defs><linearGradient id="g3" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="var(--inc)" stop-opacity=".4"/><stop offset="1" stop-color="var(--inc)" stop-opacity="0"/></linearGradient></defs>
+${axes(max,10,0)}<line x1="${L}" x2="${W-R}" y1="${y(mile,max)}" y2="${y(mile,max)}" stroke="var(--inv)" stroke-dasharray="4 5" stroke-width="1.5"/>
+<text x="${L+6}" y="${y(mile,max)-6}" font-size="11.5" font-weight="600" fill="var(--inv)">Milestone: ₹25k reached in Aug</text>
+<path d="${d} L${xp(5)},${y(0,max)} L${xp(0)},${y(0,max)}Z" fill="url(#g3)"/><path d="${d}" fill="none" stroke="var(--inc)" stroke-width="3"/>
+${pts.map((p,i)=>`<circle cx="${p[0]}" cy="${p[1]}" r="4.5" fill="var(--inc)"><title>${M[i]}: ₹${k(cum[i])} total</title></circle><text x="${p[0]}" y="${p[1]-10}" text-anchor="middle" font-size="11" font-weight="600" fill="var(--muted)">${i%1===0?'₹'+k(cum[i]):''}</text>`).join('')}${months(xp)}`)})();
+
+/* D savings rate */
+(()=>{const max=25,pts=rate.map((v,i)=>[xp(i),y(v,max)]);
+document.getElementById('c4').innerHTML=svg(`${axes(max,5,0,v=>v+'%')}
+<rect x="${L}" y="${y(20,max)}" width="${iw}" height="${y(10,max)-y(20,max)}" fill="var(--inc)" opacity=".1"/><text x="${L+36}" y="${y(10,max)-6}" font-size="11" font-weight="600" fill="var(--inc)">Healthy zone</text>
+<path d="${pts.map((p,i)=>(i?'L':'M')+p).join(' ')}" fill="none" stroke="var(--inv)" stroke-width="3" stroke-linejoin="round"/>
+${pts.map((p,i)=>`<circle cx="${p[0]}" cy="${p[1]}" r="5" fill="var(--card)" stroke="var(--inv)" stroke-width="2.5"><title>${M[i]}: ${rate[i]}%</title></circle><text x="${p[0]+(i===0?14:i===5?-10:0)}" y="${p[1]-11}" text-anchor="middle" font-size="11.5" font-weight="700" fill="var(--text)">${rate[i]}%</text>`).join('')}${months(xp)}`)})();
+
+/* E 100% stacked */
+(()=>{const bw=44;let s='';for(let i=0;i<6;i++){const tot=inc[i],parts=[['var(--exp)',exp[i],'Expense'],['var(--inv)',inv[i],'Invested'],['var(--inc)',sav[i],'Saved']];let acc=0;
+  parts.forEach(([c,v,n],j)=>{const h=v/tot*ih,yy=T+ih-acc-h;acc+=h;s+=`<rect x="${xb(i)-bw/2}" y="${yy}" width="${bw}" height="${h-1.5}" rx="${j===2?8:3}" fill="${c}"><title>${M[i]} ${n}: ₹${k(v)} (${Math.round(v/tot*100)}%)</title></rect>`;
+   if(j===2)s+=`<text x="${xb(i)}" y="${yy+h/2+4}" text-anchor="middle" font-size="11" font-weight="700" fill="#fff">${Math.round(v/tot*100)}%</text>`;
+   if(j===0)s+=`<text x="${xb(i)}" y="${yy+h/2+4}" text-anchor="middle" font-size="11" font-weight="600" fill="#fff">${Math.round(v/tot*100)}%</text>`})}
+document.getElementById('c5').innerHTML=svg(`${axes(1,.25,0,v=>Math.round(v*100)+'%').replace(/y="(\d+(\.\d+)?)"/g,(m)=>m)}${s}${months(xb)}`)})();
+
+/* F waterfall */
+(()=>{const max=45,steps=[['Income',0,42,'var(--inc)','+₹42k'],['Expenses',13.6,42,'var(--exp)','−₹28.4k'],['Invested',5.6,13.6,'var(--inv)','−₹8k'],['You kept',0,5.6,'var(--net)','₹5.6k']];const bw=64,n=4;
+const pos=i=>xb(i,n);
+document.getElementById('c6').innerHTML=svg(`${axes(max,15)}
+${steps.map(([lab,a,b,c,t],i)=>`<rect x="${pos(i)-bw/2}" y="${y(b,max)}" width="${bw}" height="${y(a,max)-y(b,max)}" rx="10" fill="${c}"><title>${lab}: ${t}</title></rect><text x="${pos(i)}" y="${y(b,max)-8}" text-anchor="middle" font-size="12.5" font-weight="700" fill="${c}">${t}</text>
+${i<3?`<line x1="${pos(i)+bw/2}" x2="${pos(i+1)-bw/2}" y1="${y(i===0?42:(i===1?13.6:5.6),max)}" y2="${y(i===0?42:(i===1?13.6:5.6),max)}" stroke="var(--muted)" stroke-dasharray="3 3"/>`:''}
+<text x="${pos(i)}" y="${H-8}" text-anchor="middle" font-size="12" fill="var(--muted)">${lab}</text>`).join('')}`)})();
+
+/* G ring + spark */
+(()=>{const pct=5.6/8,r=58,c=2*Math.PI*r;
+document.getElementById('c7ring').innerHTML=`<svg viewBox="0 0 150 150"><circle cx="75" cy="75" r="${r}" fill="none" stroke="var(--track)" stroke-width="16"/>
+<circle cx="75" cy="75" r="${r}" fill="none" stroke="url(#g7)" stroke-width="16" stroke-linecap="round" stroke-dasharray="${c*pct} ${c}" transform="rotate(-90 75 75)"/>
+<defs><linearGradient id="g7" x1="0" x2="1"><stop offset="0" stop-color="var(--net)"/><stop offset="1" stop-color="var(--inv)"/></linearGradient></defs>
+<text x="75" y="76" text-anchor="middle" font-size="26" font-weight="700" fill="var(--text)">${Math.round(pct*100)}%</text><text x="75" y="96" text-anchor="middle" font-size="11" fill="var(--muted)">of goal</text></svg>`;
+const w=260,h=50,max=8;document.getElementById('c7spark').innerHTML=`<svg viewBox="0 0 ${w} ${h+16}">${sav.map((v,i)=>{const bw=26,x=i*(w/6)+(w/6-bw)/2,hh=v/max*h;return `<rect x="${x}" y="${h-hh}" width="${bw}" height="${hh}" rx="6" fill="${i===5?'var(--net)':'var(--track)'}"><title>${M[i]}: ₹${k(v)}</title></rect><text x="${x+bw/2}" y="${h+13}" text-anchor="middle" font-size="10.5" fill="var(--muted)">${M[i]}</text>`}).join('')}</svg>`})();
+
+/* H lollipop MoM */
+(()=>{const ch=sav.map((v,i)=>i?+(v-sav[i-1]).toFixed(1):null),max=4,min=-4;
+document.getElementById('c8').innerHTML=svg(`${axes(max,2,min,v=>(v>0?'+':v<0?'−':'')+'₹'+Math.abs(v)+'k')}
+${ch.map((v,i)=>{if(v===null)return `<text x="${xb(i)}" y="${y(0,max,min)-8}" text-anchor="middle" font-size="11" fill="var(--muted)">start</text>`;const c=v>=0?'var(--inc)':'var(--exp)',yy=y(v,max,min);
+return `<line x1="${xb(i)}" x2="${xb(i)}" y1="${y(0,max,min)}" y2="${yy}" stroke="${c}" stroke-width="4" stroke-linecap="round"/><circle cx="${xb(i)}" cy="${yy}" r="11" fill="${c}"><title>${M[i]}: ${v>0?'+':''}₹${v}k vs ${M[i-1]}</title></circle>
+<text x="${xb(i)}" y="${yy+4}" text-anchor="middle" font-size="10" font-weight="700" fill="#fff">${v>0?'▲':'▼'}</text><text x="${xb(i)}" y="${v>=0?yy-17:yy+26}" text-anchor="middle" font-size="11.5" font-weight="700" fill="${c}">${v>0?'+':'−'}₹${Math.abs(v)}k</text>`}).join('')}${months(xb)}`)})();
+
+document.querySelectorAll('.top button').forEach(b=>b.onclick=()=>{document.body.dataset.mode=b.dataset.m;document.querySelectorAll('.top button').forEach(x=>x.classList.toggle('on',x===b))});
+</script>
+</body>
+</html>
