@@ -17,8 +17,8 @@ export function IncomeExpenseChart({ series }) {
     return <span className={good ? 'text-inc' : 'text-exp'}>{up ? '↑' : '↓'}{Math.abs(v).toFixed(0)}%</span>
   }
   return (
-    <div>
-      <div className="h-60 sm:h-64">
+    <div className="flex h-full flex-col">
+      <div className="min-h-60 flex-1 sm:min-h-64">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={series} barGap={4} barCategoryGap="24%" margin={{ top: 8, right: 4, left: -8, bottom: 0 }}>
             <CartesianGrid vertical={false} stroke="var(--grid)" />

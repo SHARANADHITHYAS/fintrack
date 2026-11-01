@@ -156,14 +156,14 @@ export default function Dashboard() {
       </div>
 
       <div className="grid gap-5 lg:auto-rows-[minmax(440px,auto)] lg:grid-cols-5">
-        <Card className="p-4 sm:p-6 lg:col-span-3">
+        <Card className="flex flex-col p-4 sm:p-6 lg:col-span-3">
           <CardHeader icon={BarChart3} title="Income vs expense" subtitle={`${months.length} months, compared month by month`}
             action={<div className="hidden gap-3 text-[12px] font-semibold text-muted sm:flex"><span className="flex items-center gap-1.5"><i className="size-2.5 rounded-full bg-inc" />Income</span><span className="flex items-center gap-1.5"><i className="size-2.5 rounded-full bg-exp" />Expense</span></div>} />
-          <div className="mt-4">{empty ? <EmptyState icon={BarChart3} title="Your chart is waiting" text="Add your first income or expense on the Transactions page and watch this fill up." action={<Button variant="primary" onClick={() => nav('/transactions')}>Go to Transactions <ArrowRight className="size-4" /></Button>} /> : <IncomeExpenseChart series={series} />}</div>
+          <div className="mt-4 flex flex-1 flex-col">{empty ? <EmptyState icon={BarChart3} title="Your chart is waiting" text="Add your first income or expense on the Transactions page and watch this fill up." action={<Button variant="primary" onClick={() => nav('/transactions')}>Go to Transactions <ArrowRight className="size-4" /></Button>} /> : <IncomeExpenseChart series={series} />}</div>
         </Card>
         <Card className="flex flex-col p-4 sm:p-6 lg:col-span-2">
           <CardHeader icon={Donut} title="Where your money went" subtitle={`${range.label} expenses`} />
-          <div className="mt-5">{cats.length ? <CategoryDonut items={cats} total={t.expense} /> : <EmptyState icon={Donut} title="No expenses in this period" text="Nice and quiet. Spending shows up here by category." />}</div>
+          <div className="mt-5 flex flex-1 items-center [&>*]:w-full">{cats.length ? <CategoryDonut items={cats} total={t.expense} /> : <EmptyState icon={Donut} title="No expenses in this period" text="Nice and quiet. Spending shows up here by category." />}</div>
           {cats.length > 0 && <SpendInsights data={data} range={range} period={period} />}
         </Card>
       </div>

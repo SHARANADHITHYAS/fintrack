@@ -1,5 +1,5 @@
 import { findCategory, isBudgetExpense } from '../lib/finance'
-import { cn, fmtDateShort, fromISO, inRange, money, monthLabel, round2, sum, toISO, todayISO } from '../lib/utils'
+import { cn, fmtDateShort, fromISO, inRange, money, monthLabel, sum, toISO, todayISO } from '../lib/utils'
 
 const DAY = 86400000
 
@@ -20,8 +20,8 @@ export function previousRange(range) {
 
 /**
  * Fills the space under "Where your money went" with real facts about the period:
- * the biggest single expense, the daily average, the change vs the period before,
- * and which categories moved the most.
+ * the biggest single expense, the daily average and the change vs the period before,
+ * kept short so the card matches the Income vs expense card beside it.
  */
 export default function SpendInsights({ data, range, period }) {
   const cur = data.transactions.filter((t) => isBudgetExpense(t) && inRange(t.date, range))
@@ -38,16 +38,6 @@ export default function SpendInsights({ data, range, period }) {
   const prevTx = prev ? data.transactions.filter((t) => isBudgetExpense(t) && inRange(t.date, prev)) : []
   const prevTotal = sum(prevTx, (t) => t.amount)
   const change = prevTotal ? ((total - prevTotal) / prevTotal) * 100 : null
-
-  const byCat = (list) => list.reduce((m, t) => m.set(t.categoryId, (m.get(t.categoryId) || 0) + t.amount), new Map())
-  const a = byCat(cur), b = byCat(prevTx)
-  const movers = prev && prevTx.length
-    ? [...new Set([...a.keys(), ...b.keys()])]
-        .map((id) => ({ id, name: findCategory(data, id).name, diff: round2((a.get(id) || 0) - (b.get(id) || 0)) }))
-        .filter((m) => Math.abs(m.diff) >= 1)
-        .sort((x, y) => Math.abs(y.diff) - Math.abs(x.diff))
-        .slice(0, 3)
-    : []
 
   const Fact = ({ label, value, sub, tone }) => (
     <div className="min-w-0">
@@ -66,19 +56,6 @@ export default function SpendInsights({ data, range, period }) {
           ? <Fact label={`vs ${prev.label}`} value={`${change >= 0 ? '↑' : '↓'} ${Math.abs(Math.round(change))}%`} sub={`${total - prevTotal >= 0 ? '+' : '−'}${money(Math.abs(total - prevTotal))}`} tone={change > 0 ? 'text-exp' : 'text-inc'} />
           : <Fact label="Entries" value={String(cur.length)} sub={`${new Set(cur.map((t) => t.categoryId)).size} categories`} />}
       </div>
-      {movers.length > 0 && (
-        <div>
-          <div className="mb-1.5 text-[12px] text-muted">Biggest changes vs {prev.label}</div>
-          <ul className="divide-y divide-line">
-            {movers.map((m) => (
-              <li key={m.id} className="flex items-center justify-between py-1.5 text-[13px]">
-                <span className="truncate text-fg">{m.name}</span>
-                <span className={cn('font-semibold', m.diff > 0 ? 'text-exp' : 'text-inc')}>{m.diff > 0 ? '+' : '−'}{money(Math.abs(m.diff))}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
     </div>
   )
 }
