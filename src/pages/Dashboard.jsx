@@ -1,17 +1,19 @@
 import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ArrowRight, BarChart3, CreditCard, Donut, Pencil, PiggyBank, Rocket, Sparkles, Target, Activity } from 'lucide-react'
+import { ArrowRight, BarChart3, CreditCard, Donut, Pencil, PiggyBank, Rocket, Sparkles, Target } from 'lucide-react'
 import { Badge, Button, Card, CardHeader, EmptyState } from '../components/ui'
 import { PageHero, PeriodSelect, StatCards, StreakBadge } from '../components/common'
 import { CategoryDonut, IncomeExpenseChart, SavingsGoalChart } from '../components/charts'
-import { TxnRow } from '../components/TransactionList'
 import GoalDialog from '../components/GoalDialog'
 import { AccountsSummary } from './Accounts'
+import { BucketsSummary } from './Buckets'
+import { BreakdownDialog, NetBalanceDialog } from '../components/DashboardDetails'
+import SpendInsights from '../components/SpendInsights'
 import { useTxnEditor } from '../components/TxnEditor'
 import { useAuth } from '../context/AuthContext'
 import { useData } from '../context/DataContext'
 import { useToast } from '../context/ToastContext'
-import { categoryBreakdown, chartMonths, currentGoal, earliestDate, filterRange, goalAmount, goalEntryFor, monthlySeries, sortTxns, totals, totalsUpTo, trackingStreak, investmentStats } from '../lib/finance'
+import { categoryBreakdown, chartMonths, currentGoal, earliestDate, filterRange, goalAmount, goalEntryFor, monthlySeries, sortTxns, totals, totalsUpTo, isInvesting, trackingStreak, investmentStats } from '../lib/finance'
 import { lineFor, streakText, timeGreeting } from '../lib/greetings'
 import { firstName, moneyK, money, monthLabel, monthShort, periodRange, cn, round2 } from '../lib/utils'
 
@@ -41,7 +43,7 @@ export function statNotes(data, period, t, range) {
   if (!notes.expense) notes.expense = { text: t.expense ? 'Excl. investments' : 'Nothing spent yet 🙌' }
   const activeSips = data.investments.filter((i) => i.type === 'sip' && investmentStats(i, data.transactions).status === 'active').length
   notes.investments = { text: activeSips ? `${activeSips} SIP${activeSips > 1 ? 's' : ''} running` : 'Put your money to work' }
-  notes.net = { text: t.income > 0 ? `${Math.max(0, Math.round((t.net / t.income) * 100))}% of income saved` : 'Income − expense − invested' }
+  notes.net = { text: t.income > 0 ? `${Math.max(0, Math.round((t.net / t.income) * 100))}% of income saved` : 'Income − expense − invested − bucket' }
   return notes
 }
 
@@ -53,6 +55,7 @@ export default function Dashboard() {
   const { openEdit, dialogs } = useTxnEditor()
   const { period, setPeriod, custom, setCustom } = usePeriodState('dash')
   const [goalOpen, setGoalOpen] = useState(false)
+  const [detail, setDetail] = useState(null) // 'income' | 'expense' | 'investments' | 'net'
 
   const earliest = earliestDate(data)
   const range = periodRange(period, custom, earliest)
@@ -68,7 +71,7 @@ export default function Dashboard() {
     ? { text: `Savings covered a ${moneyK(-t.net)} gap`, tone: 'net' }
     : carried
       ? { text: `Incl. ${moneyK(carried)} carried forward`, tone: carried > 0 ? 'inc' : 'exp' }
-      : { text: 'Income − expense − invested' }
+      : { text: 'Income − expense − invested − bucket' }
   const months = chartMonths(range, 6)
   const series = monthlySeries(data.transactions, months)
   const cats = categoryBreakdown(data, inPeriod)
@@ -84,7 +87,6 @@ export default function Dashboard() {
     if (a && b && a !== b) changes.push({ month: savingsSeries[i].month, up: savingsSeries[i].goal > savingsSeries[i - 1].goal, value: b.mode === 'amount' ? moneyK(b.value) : `${b.value}%` })
   }
   const last = savingsSeries.at(-1)
-  const recent = sortTxns(data.transactions).slice(0, 6)
   const empty = data.transactions.length === 0
 
   return (
@@ -98,7 +100,6 @@ export default function Dashboard() {
 
       {!data.prefs?.onboarded && (
         <Card className="anim-pop relative overflow-hidden p-5 sm:p-6">
-          <div className="pointer-events-none absolute -top-20 -right-10 size-56 rounded-full bg-teal/10 blur-3xl" />
           <div className="relative flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex gap-3.5">
               <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-teal-soft text-teal"><Rocket className="size-6" /></span>
@@ -117,24 +118,12 @@ export default function Dashboard() {
         </Card>
       )}
 
-      <StatCards t={cards} notes={notes} />
+      <StatCards t={cards} notes={notes} onSelect={setDetail} />
 
       <AccountsSummary />
 
-      <div className="grid gap-5 lg:grid-cols-5">
-        <Card className="p-4 sm:p-6 lg:col-span-3">
-          <CardHeader icon={BarChart3} title="Income vs expense" subtitle={`${months.length} months, compared month by month`}
-            action={<div className="hidden gap-3 text-[12px] font-semibold text-muted sm:flex"><span className="flex items-center gap-1.5"><i className="size-2.5 rounded-full bg-inc" />Income</span><span className="flex items-center gap-1.5"><i className="size-2.5 rounded-full bg-exp" />Expense</span></div>} />
-          <div className="mt-4">{empty ? <EmptyState icon={BarChart3} title="Your chart is waiting" text="Add your first income or expense on the Transactions page and watch this fill up." action={<Button variant="primary" onClick={() => nav('/transactions')}>Go to Transactions <ArrowRight className="size-4" /></Button>} /> : <IncomeExpenseChart series={series} />}</div>
-        </Card>
-        <Card className="p-4 sm:p-6 lg:col-span-2">
-          <CardHeader icon={Donut} title="Where your money went" subtitle={`${range.label} expenses`} />
-          <div className="mt-5">{cats.length ? <CategoryDonut items={cats} total={t.expense} /> : <EmptyState icon={Donut} title="No expenses in this period" text="Nice and quiet. Spending shows up here by category." />}</div>
-        </Card>
-      </div>
-
-      <div className="grid gap-5 lg:grid-cols-5">
-        <Card className="p-4 sm:p-6 lg:col-span-3">
+      <div className="grid gap-5 lg:auto-rows-[minmax(440px,auto)] lg:grid-cols-5">
+        <Card className="flex flex-col p-4 sm:p-6 lg:col-span-3">
           <CardHeader icon={PiggyBank} title="Monthly savings vs your goal" subtitle="Green months beat your goal, amber months fell a little short."
             action={goal ? (
               <Button variant="soft" size="sm" onClick={() => setGoalOpen(true)} title="Change your goal"><Target className="size-4" />Goal: {goal.mode === 'amount' ? moneyK(goal.value) : `${goal.value}%`}<Pencil className="size-3.5 opacity-70" /></Button>
@@ -163,16 +152,27 @@ export default function Dashboard() {
             </>
           )}
         </Card>
+        <BucketsSummary className="lg:col-span-2" />
+      </div>
+
+      <div className="grid gap-5 lg:auto-rows-[minmax(440px,auto)] lg:grid-cols-5">
+        <Card className="p-4 sm:p-6 lg:col-span-3">
+          <CardHeader icon={BarChart3} title="Income vs expense" subtitle={`${months.length} months, compared month by month`}
+            action={<div className="hidden gap-3 text-[12px] font-semibold text-muted sm:flex"><span className="flex items-center gap-1.5"><i className="size-2.5 rounded-full bg-inc" />Income</span><span className="flex items-center gap-1.5"><i className="size-2.5 rounded-full bg-exp" />Expense</span></div>} />
+          <div className="mt-4">{empty ? <EmptyState icon={BarChart3} title="Your chart is waiting" text="Add your first income or expense on the Transactions page and watch this fill up." action={<Button variant="primary" onClick={() => nav('/transactions')}>Go to Transactions <ArrowRight className="size-4" /></Button>} /> : <IncomeExpenseChart series={series} />}</div>
+        </Card>
         <Card className="flex flex-col p-4 sm:p-6 lg:col-span-2">
-          <CardHeader icon={Activity} title="Latest activity" subtitle="Your most recent entries" action={<Link to="/transactions" className="text-[13px] font-semibold text-teal hover:underline">View all</Link>} />
-          <div className={cn('mt-3 -mx-3 flex-1 divide-y divide-line sm:-mx-4', !recent.length && 'grid place-items-center')}>
-            {recent.length ? recent.map((x) => <TxnRow key={x.id} t={x} onEdit={openEdit} />) : <EmptyState icon={Activity} title="Nothing here yet… for now" text="Your first entry is one tap away on the Transactions page." />}
-          </div>
+          <CardHeader icon={Donut} title="Where your money went" subtitle={`${range.label} expenses`} />
+          <div className="mt-5">{cats.length ? <CategoryDonut items={cats} total={t.expense} /> : <EmptyState icon={Donut} title="No expenses in this period" text="Nice and quiet. Spending shows up here by category." />}</div>
+          {cats.length > 0 && <SpendInsights data={data} range={range} period={period} />}
         </Card>
       </div>
 
       <p className="pt-2 text-center text-[13px] text-faint italic">“Small, steady steps. Consistency beats intensity every single month.”</p>
       <GoalDialog open={goalOpen} onOpenChange={(o) => { setGoalOpen(o); if (!o && !data.prefs?.onboarded && data.goals.length) setPrefs({ onboarded: true }) }} />
+      <BreakdownDialog kind={detail === 'net' ? null : detail} onOpenChange={(o) => !o && setDetail(null)} range={range}
+        txns={detail === 'investments' ? data.transactions.filter((x) => isInvesting(x) && x.date <= range.end) : inPeriod} />
+      <NetBalanceDialog open={detail === 'net'} onOpenChange={(o) => !o && setDetail(null)} />
       {dialogs}
     </div>
   )

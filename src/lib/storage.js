@@ -31,6 +31,7 @@ export const emptyData = () => ({
   goals: [],
   openingBalances: {},
   customSubs: {},
+  buckets: [],
   prefs: { onboarded: false },
 })
 

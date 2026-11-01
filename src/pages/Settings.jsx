@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Check, Database, Gift, Landmark, LogOut, Moon, Palette, Pencil, Plus, Sparkles, Sun, Tag, Target, Trash2, User, Wallet, X, ShieldCheck } from 'lucide-react'
+import { Check, Database, PiggyBank, Gift, Landmark, LogOut, Moon, Palette, Pencil, Plus, Sparkles, Sun, Tag, Target, Trash2, User, Wallet, X, ShieldCheck, Download, FileUp, Upload } from 'lucide-react'
 import { Badge, Button, Card, CardHeader, ConfirmDialog, Input, Segmented, Select } from '../components/ui'
 import { PageHero } from '../components/common'
 import GoalDialog from '../components/GoalDialog'
+import ImportDialog from '../components/ImportDialog'
+import { downloadTemplate } from '../lib/importer'
 import { CategoryBubble } from '../components/Icon'
 import { useAuth } from '../context/AuthContext'
 import { useData } from '../context/DataContext'
@@ -65,6 +67,7 @@ export default function SettingsPage() {
   const [editName, setEditName] = useState(false)
   const [name, setName] = useState(user?.name || '')
   const [goalOpen, setGoalOpen] = useState(false)
+  const [importOpen, setImportOpen] = useState(false)
   const [catType, setCatType] = useState('expense')
   const [catName, setCatName] = useState('')
   const [confirmReset, setConfirmReset] = useState(false)
@@ -82,7 +85,7 @@ export default function SettingsPage() {
         <Card className="p-4 sm:p-6">
           <CardHeader icon={User} title="Profile" subtitle="Your basic details" />
           <div className="mt-5 flex items-center gap-4">
-            <span className="grid size-16 shrink-0 place-items-center rounded-2xl bg-[linear-gradient(135deg,var(--net),var(--violet))] font-display text-xl font-extrabold text-white shadow-[0_0_30px_-10px_var(--violet)]">{initials(user?.name)}</span>
+            <span className="grid size-16 shrink-0 place-items-center rounded-2xl bg-net font-display text-xl font-extrabold text-white">{initials(user?.name)}</span>
             <div className="min-w-0 flex-1">
               {editName ? (
                 <div className="flex gap-2">
@@ -97,7 +100,7 @@ export default function SettingsPage() {
             </div>
           </div>
           <div className="mt-5 grid grid-cols-2 gap-3 text-[13px]">
-            <div className="rounded-2xl bg-card-2 p-3"><div className="text-muted">Account status</div><div className="mt-0.5 flex items-center gap-1.5 font-bold text-inc"><span className="size-2 rounded-full bg-inc shadow-[0_0_8px_var(--inc)]" />Active</div></div>
+            <div className="rounded-2xl bg-card-2 p-3"><div className="text-muted">Account status</div><div className="mt-0.5 flex items-center gap-1.5 font-bold text-inc"><span className="size-2 rounded-full bg-inc" />Active</div></div>
             <div className="rounded-2xl bg-card-2 p-3"><div className="text-muted">Member since</div><div className="mt-0.5 font-bold text-fg">{user?.createdAt ? fmtDate(user.createdAt.slice(0, 10)) : '—'}</div></div>
             <div className="rounded-2xl bg-card-2 p-3"><div className="text-muted">Transactions</div><div className="mt-0.5 font-bold text-fg">{data.transactions.length}</div></div>
             <div className="rounded-2xl bg-card-2 p-3"><div className="text-muted">Cards · Investments</div><div className="mt-0.5 font-bold text-fg">{data.cards.length} · {data.investments.length}</div></div>
@@ -114,6 +117,9 @@ export default function SettingsPage() {
             <Row icon={Target} title="Monthly savings goal" sub={goal ? (goal.mode === 'amount' ? `${moneyK(goal.value)} a month` : `${goal.value}% of income`) : 'Not set yet'}>
               <Button variant="soft" size="sm" onClick={() => setGoalOpen(true)}>{goal ? <><Pencil className="size-3.5" />Edit</> : <><Plus className="size-4" />Set goal</>}</Button>
             </Row>
+            <Row icon={PiggyBank} tone="teal" title="Savings buckets" sub="Money set aside for a phone, bike, trip…">
+              <Button variant="secondary" size="sm" onClick={() => nav('/buckets')}>Open</Button>
+            </Row>
             <Row icon={Landmark} tone="teal" title="Account balances" sub="Set and track bank, wallet and cash balances">
               <Button variant="secondary" size="sm" onClick={() => nav('/accounts')}>Open</Button>
             </Row>
@@ -121,6 +127,22 @@ export default function SettingsPage() {
           </div>
         </Card>
       </div>
+
+      <Card className="p-4 sm:p-6">
+        <CardHeader icon={FileUp} title="Import and export" subtitle="Bring in transactions from Excel: income, expenses, investments, card spends, bill payments and buckets." />
+        <ol className="mt-4 grid gap-2 text-[13px] sm:grid-cols-3">
+          {[['1', 'Download the template', 'It has examples and your exact bank, card and category names.'], ['2', 'Fill your rows', 'One row per transaction. DD-MM-YYYY dates.'], ['3', 'Upload it here', 'Check the preview, then confirm. Duplicates are skipped.']].map(([n, h, p]) => (
+            <li key={n} className="flex gap-3 rounded-2xl bg-card-2 p-3">
+              <span className="grid size-7 shrink-0 place-items-center rounded-full bg-teal-soft text-[12px] font-bold text-teal">{n}</span>
+              <span><b className="block text-fg">{h}</b><span className="text-[12px] text-muted">{p}</span></span>
+            </li>
+          ))}
+        </ol>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Button variant="secondary" onClick={() => downloadTemplate(data).then(() => toast('Template downloaded'))}><Download className="size-4" />Download template</Button>
+          <Button variant="primary" onClick={() => setImportOpen(true)}><Upload className="size-4" />Import file</Button>
+        </div>
+      </Card>
 
       <div className="grid gap-5 lg:grid-cols-2">
         <SourceList title="Bank accounts" icon={Landmark} items={allBanks(data)} onAdd={(n) => { addBank(n); toast(`${n} added`) }} onRemove={(id) => { removeBank(id); toast('Bank removed', 'info') }} placeholder="e.g. SBI Savings" usage={usage} />
@@ -155,6 +177,7 @@ export default function SettingsPage() {
       </Card>
 
       <GoalDialog open={goalOpen} onOpenChange={setGoalOpen} />
+      <ImportDialog open={importOpen} onOpenChange={setImportOpen} />
       <ConfirmDialog open={confirmDemo} onOpenChange={setConfirmDemo} icon={Sparkles} tone="primary" confirmLabel="Load sample data" title="Replace your data with sample data?"
         points={['6 months of sample income, expenses, 2 cards, an EMI, SIPs and a ₹5k goal.', 'Your current entries in this account are replaced. Other logins are not affected.']}
         onConfirm={() => { loadDemo(); toast('Sample data loaded. Explore away!') }} />

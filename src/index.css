@@ -2,64 +2,73 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* Neon theme tokens: light by default, dark under .dark */
+/*
+ * FinTrack tokens (toned down, per the design-taste app-screen rules):
+ * one ground, white/neutral surfaces separated by a 1px line (no glows), true neutral darks (no navy),
+ * teal as the one accent, status colours that pass 4.5:1 as text, and no violet.
+ * "--violet" is kept as a token name for secondary marks but is now a neutral graphite.
+ */
 :root {
-  --page: #e9eef6;
-  --bg: #f3f6fb;
+  --page: #f3f4f6;
+  --bg: #f7f8fa;
   --card: #ffffff;
-  --card-2: #f6f8fc;
-  --line: #dbe3f0;
-  --fg: #0b1324;
-  --muted: #5b6782;
-  --faint: #8a95ad;
-  --grid: #e8edf5;
-  --teal: #0d9488;
-  --teal-soft: #ccfbf1;
-  --violet: #7c3aed;
-  --violet-soft: #ede9fe;
-  --inc: #0d9488;
-  --inc-soft: #ccfbf1;
-  --exp: #e11d48;
-  --exp-soft: #ffe4e6;
-  --inv: #7c3aed;
-  --inv-soft: #ede9fe;
-  --net: #2563eb;
-  --net-soft: #dbeafe;
-  --warn: #d97706;
-  --warn-soft: #fef3c7;
+  --card-2: #f3f4f6;
+  --line: #e5e7eb;
+  --fg: #111111;
+  --muted: #5f6368;
+  --faint: #6b6b6b;
+  --grid: #ececec;
+  --teal: #0f766e;
+  --teal-soft: #e3f4f1;
+  --violet: #4b5563;
+  --violet-soft: #f0f1f3;
+  --inc: #247b50;
+  --inc-soft: #dcfae5;
+  --exp: #c4242a;
+  --exp-soft: #ffedea;
+  --inv: #9a5b0b;
+  --inv-soft: #fdf1dd;
+  --net: #1d5fb4;
+  --net-soft: #e6eefb;
+  --warn: #b45309;
+  --warn-soft: #fff6e5;
   --on-teal: #ffffff;
-  --glow: 0 0 0 1px var(--line), 0 12px 32px -20px rgba(13, 148, 136, .35);
-  --glow-strong: 0 0 0 1px var(--line), 0 18px 44px -18px rgba(13, 148, 136, .45);
-  --overlay: rgba(15, 23, 42, .45);
+  --primary: #1d1f20;
+  --on-primary: #ffffff;
+  --glow: 0 0 0 1px var(--line);
+  --glow-strong: 0 0 0 1px var(--line), 0 16px 40px -16px rgba(0, 0, 0, .18);
+  --overlay: rgba(17, 17, 17, .4);
 }
 .dark {
-  --page: #05080f;
-  --bg: #0a0f1c;
-  --card: #111a2e;
-  --card-2: #0d1426;
-  --line: #1f2b47;
-  --fg: #e6edf7;
-  --muted: #8391ab;
-  --faint: #5d6a85;
-  --grid: #1a2440;
-  --teal: #2dd4bf;
-  --teal-soft: rgba(45, 212, 191, .14);
-  --violet: #a78bfa;
-  --violet-soft: rgba(167, 139, 250, .15);
-  --inc: #2dd4bf;
-  --inc-soft: rgba(45, 212, 191, .14);
-  --exp: #fb7185;
-  --exp-soft: rgba(251, 113, 133, .14);
-  --inv: #a78bfa;
-  --inv-soft: rgba(167, 139, 250, .15);
-  --net: #60a5fa;
-  --net-soft: rgba(96, 165, 250, .14);
-  --warn: #fbbf24;
-  --warn-soft: rgba(251, 191, 36, .14);
+  --page: #000000;
+  --bg: #0b0b0c;
+  --card: #141415;
+  --card-2: #1c1c1e;
+  --line: #2a2a2c;
+  --fg: #f5f5f5;
+  --muted: #b4b4b4;
+  --faint: #949494;
+  --grid: #242426;
+  --teal: #3cc7b4;
+  --teal-soft: rgba(60, 199, 180, .13);
+  --violet: #c9c9cd;
+  --violet-soft: #232325;
+  --inc: #3fc07a;
+  --inc-soft: #172a1d;
+  --exp: #ef6b7e;
+  --exp-soft: #2c1a1e;
+  --inv: #e3b04f;
+  --inv-soft: #2a2214;
+  --net: #6aa6ff;
+  --net-soft: #17233a;
+  --warn: #f0a43a;
+  --warn-soft: #2a2010;
   --on-teal: #04110f;
-  --glow: 0 0 0 1px var(--line), 0 12px 40px -20px rgba(45, 212, 191, .35);
-  --glow-strong: 0 0 0 1px #2a3a5e, 0 18px 50px -18px rgba(45, 212, 191, .5);
-  --overlay: rgba(2, 5, 12, .7);
+  --primary: #f5f5f5;
+  --on-primary: #111111;
+  --glow: 0 0 0 1px var(--line);
+  --glow-strong: 0 0 0 1px #3a3a3d, 0 18px 44px -16px rgba(0, 0, 0, .6);
+  --overlay: rgba(0, 0, 0, .65);
 }
 
 @theme inline {
@@ -89,6 +98,8 @@
   --color-warn: var(--warn);
   --color-warn-soft: var(--warn-soft);
   --color-on-teal: var(--on-teal);
+  --color-primary: var(--primary);
+  --color-on-primary: var(--on-primary);
   --shadow-glow: var(--glow);
   --shadow-glow-strong: var(--glow-strong);
 }
@@ -98,24 +109,24 @@ body {
   background: var(--bg);
   color: var(--fg);
   font-family: var(--font-sans);
+  /* Fixed-width digits everywhere, so rupee amounts line up and don't jump while typing */
+  font-variant-numeric: tabular-nums;
   -webkit-font-smoothing: antialiased;
   -webkit-tap-highlight-color: transparent;
 }
-.app-bg {
-  background:
-    radial-gradient(900px 420px at 88% -8%, color-mix(in srgb, var(--violet) 12%, transparent), transparent 60%),
-    radial-gradient(800px 420px at -5% 105%, color-mix(in srgb, var(--teal) 10%, transparent), transparent 60%),
-    var(--bg);
-  background-attachment: fixed;
-}
+.app-bg { background: var(--bg); }
 .font-display { font-family: var(--font-display); }
 .tabular { font-variant-numeric: tabular-nums; }
 
-/* Inputs */
+/* Smooth light ↔ dark switch (View Transitions cross-fade; skipped for reduced motion) */
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: 380ms; animation-timing-function: cubic-bezier(.2, .8, .2, 1); }
+.theme-fading, .theme-fading * { transition: background-color .35s ease, border-color .35s ease, color .35s ease, fill .35s ease !important; }
+
+/* Inputs: one control height (40px) across forms and filters */
 .ft-input {
   width: 100%;
-  height: 44px;
-  border-radius: 12px;
+  height: 40px;
+  border-radius: 10px;
   border: 1px solid var(--line);
   background: var(--card-2);
   color: var(--fg);

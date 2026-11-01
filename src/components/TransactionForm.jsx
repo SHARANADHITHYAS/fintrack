@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { ArrowDownRight, ArrowUpRight, CreditCard, Info, Receipt, TrendingUp, Gift, Smartphone, Coins, CalendarClock, Repeat, Wallet } from 'lucide-react'
 import { Button, Dialog, Field, Input, MoneyInput, Select, Segmented, Switch, Textarea } from './ui'
-import { AccountPicker, CategoryPicker, ModeChips, SubcategoryPicker } from './Pickers'
+import { AccountPicker, CategoryGrid, ModeChips, SubcategoryPicker } from './Pickers'
 import { useData } from '../context/DataContext'
 import { useToast } from '../context/ToastContext'
 import { CAT, EMI_TENURES, EXPENSE_MODES, FRIEND_CC, INCOME_MODES, INVESTMENT_INCOME_TYPES, PAY_FROM_MODES, PAYMENT_STATUSES } from '../lib/constants'
@@ -166,13 +166,13 @@ export default function TransactionForm({ open, onOpenChange, initial, onSaved }
       description={editing ? 'Changes flow to cards, investments and your dashboard.' : 'A two-second entry today saves a month of guessing.'}
       footer={<><Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button><Button variant="primary" onClick={submit} className="min-w-32">{editing ? 'Save changes' : 'Save transaction'}</Button></>}
     >
-      <form onSubmit={submit} className="space-y-4" noValidate>
+      <form onSubmit={submit} className="space-y-3.5" noValidate>
         <Segmented
           value={f.type}
           onChange={switchType}
           options={[
-            { value: 'expense', label: 'Expense', icon: ArrowDownRight, activeClass: 'bg-exp text-white shadow-[0_0_18px_-6px_var(--exp)]' },
-            { value: 'income', label: 'Income', icon: ArrowUpRight, activeClass: 'bg-inc text-on-teal shadow-[0_0_18px_-6px_var(--inc)]' },
+            { value: 'expense', label: 'Expense', icon: ArrowDownRight, activeClass: 'bg-card text-exp ring-1 ring-exp/40' },
+            { value: 'income', label: 'Income', icon: ArrowUpRight, activeClass: 'bg-card text-inc ring-1 ring-inc/40' },
           ]}
         />
 
@@ -181,13 +181,13 @@ export default function TransactionForm({ open, onOpenChange, initial, onSaved }
             <MoneyInput big value={f.amount} onChange={(v) => set({ amount: v })} placeholder="0" invalid={!!errors.amount} autoFocus />
           </Field>
           <Field label="Date" required error={errors.date}>
-            <Input type="date" value={f.date} max="2100-12-31" onChange={(e) => set({ date: e.target.value })} className="sm:!h-14" invalid={!!errors.date} />
+            <Input type="date" value={f.date} max="2100-12-31" onChange={(e) => set({ date: e.target.value })} className="sm:!h-12" invalid={!!errors.date} />
           </Field>
         </div>
 
-        <div className={cn('grid gap-3', cat?.subcategories?.length && 'sm:grid-cols-2')}>
+        <div className="grid gap-3">
           <Field label="Category" required error={errors.categoryId}>
-            <CategoryPicker type={f.type} value={f.categoryId} onChange={onCategory} invalid={!!errors.categoryId} />
+            <CategoryGrid type={f.type} value={f.categoryId} onChange={onCategory} invalid={!!errors.categoryId} />
           </Field>
           {cat?.subcategories?.length > 0 && (
             <Field label={isInvesting ? 'Subcategory preset' : cat.subLabel || 'Subcategory'} required={cat.subRequired} optional={!isInvesting && !cat.subRequired} error={errors.subcategory}>

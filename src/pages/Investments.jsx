@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react'
-import { BarChart3, ChartPie, Download, LineChart, MoreVertical, Pause, Pencil, Play, Plus, RefreshCw, Trash2, TrendingDown, TrendingUp, Wallet, Coins, Percent, Sprout } from 'lucide-react'
+import { BarChart3, ChartPie, Download, LineChart, MoreVertical, Pause, Pencil, Play, Plus, RefreshCw, Trash2, TrendingDown, TrendingUp, Wallet, Coins, Percent, Sprout, Upload } from 'lucide-react'
 import { Badge, Button, Card, CardHeader, ConfirmDialog, EmptyState, Menu, Segmented } from '../components/ui'
 import { PageHero } from '../components/common'
 import { AllocationPie, ReturnsBar } from '../components/charts'
-import { InvestmentForm, UpdateValueDialog } from '../components/InvestmentForm'
+import { ChitPayoutDialog, InvestmentForm, UpdateValueDialog } from '../components/InvestmentForm'
 import ExportDialog from '../components/ExportDialog'
+import ImportDialog from '../components/ImportDialog'
 import { useData } from '../context/DataContext'
 import { useToast } from '../context/ToastContext'
 import { accountName, earliestDate, investmentStats } from '../lib/finance'
@@ -26,7 +27,7 @@ function Stat({ label, value, sub, tone, icon: I }) {
   )
 }
 
-function Holding({ inv, s, onEdit, onValue, onDelete }) {
+function Holding({ inv, s, onEdit, onValue, onDelete, onPayout }) {
   const { data, setSipStatus } = useData()
   const toast = useToast()
   const color = invCategoryColor(inv.category)
@@ -44,6 +45,7 @@ function Holding({ inv, s, onEdit, onValue, onDelete }) {
         <Menu trigger={<Button variant="ghost" size="icon-sm" aria-label="Investment actions"><MoreVertical className="size-4" /></Button>}
           items={[
             { label: 'Update current value', icon: RefreshCw, onSelect: onValue },
+            inv.category === 'Chit Fund' && { label: 'Record payout', icon: Coins, onSelect: onPayout },
             { label: 'Edit', icon: Pencil, onSelect: onEdit },
             inv.type === 'sip' && s.status !== 'completed' && (inv.status === 'stopped'
               ? { label: 'Resume SIP', icon: Play, onSelect: () => { setSipStatus(inv.id, 'active'); toast('SIP resumed. Back on track!') } }
@@ -53,7 +55,7 @@ function Holding({ inv, s, onEdit, onValue, onDelete }) {
       </div>
 
       <div className="mt-3 flex flex-wrap items-center gap-1.5">
-        <Badge tone="violet">{inv.type === 'sip' ? 'SIP' : 'Lumpsum'}</Badge>
+        <Badge tone="violet">{inv.amounts ? 'Chit fund' : inv.type === 'sip' ? 'SIP' : 'Lumpsum'}</Badge>
         <Badge tone={inv.type === 'lumpsum' ? 'teal' : statusTone}>{statusLabel}</Badge>
         <span className="ml-auto text-[11.5px] font-medium text-faint">Started: {fmtDMY(inv.startDate)}</span>
       </div>
@@ -73,9 +75,11 @@ function Holding({ inv, s, onEdit, onValue, onDelete }) {
           <>
             <div className="flex justify-between"><span>Installments</span><b className="text-fg">{s.count}{inv.tenureMonths ? ` of ${inv.tenureMonths}` : ' paid'}</b></div>
             {inv.tenureMonths && <div className="h-1.5 overflow-hidden rounded-full bg-card-2"><div className="h-full rounded-full bg-violet" style={{ width: `${Math.min(100, (s.count / inv.tenureMonths) * 100)}%` }} /></div>}
-            <div className="flex justify-between"><span>{money(inv.amountPaid)} / month</span><span>{s.next ? <>Next: <b className="text-fg">{fmtDate(s.next)}</b></> : s.status === 'completed' ? 'All done 🎉' : 'Paused'}</span></div>
+            <div className="flex justify-between"><span>{inv.amounts ? `Usual ${money(inv.amountPaid)}` : `${money(inv.amountPaid)} / month`}</span><span>{s.next ? <>Next: <b className="text-fg">{fmtDate(s.next)}</b></> : s.status === 'completed' ? 'All done 🎉' : 'Paused'}</span></div>
           </>
         )}
+        {inv.freqMonths > 1 && <div className="flex justify-between"><span>Pays</span><b className="text-fg">Every {inv.freqMonths} months</b></div>}
+        {s.payoutTotal > 0 && <div className="flex justify-between"><span>Payout received</span><b className="text-inc">{money(s.payoutTotal)}</b></div>}
         {s.charges > 0 && <div className="flex justify-between"><span>Charges / GST paid</span><b className="text-warn">{money(s.charges)}</b></div>}
         {inv.description && <p className="truncate text-faint">{inv.description}</p>}
       </div>
@@ -89,9 +93,11 @@ export default function Investments() {
   const toast = useToast()
   const [form, setForm] = useState({ open: false, initial: null })
   const [valueFor, setValueFor] = useState(null)
+  const [payoutFor, setPayoutFor] = useState(null)
   const [del, setDel] = useState(null)
   const [filter, setFilter] = useState('all')
   const [exportOpen, setExportOpen] = useState(false)
+  const [importOpen, setImportOpen] = useState(false)
 
   const rows = useMemo(() => data.investments.map((inv) => ({ inv, s: investmentStats(inv, data.transactions) })).sort((a, b) => b.s.current - a.s.current), [data])
   const shown = rows.filter((r) => filter === 'all' || r.inv.type === filter)
@@ -132,6 +138,7 @@ export default function Investments() {
       <PageHero title="Investments" subtitle={lineFor('investments')}
         badge={activeSips.length ? <Badge tone="violet" className="!py-1 !text-[12.5px]"><LineChart className="size-3.5" />{activeSips.length} active SIP{activeSips.length > 1 ? 's' : ''} · {money(monthlySip)}/month on autopilot</Badge> : null}
         right={<>
+          <Button variant="secondary" onClick={() => setImportOpen(true)}><Upload className="size-4" />Import</Button>
           <Button variant="secondary" onClick={() => setExportOpen(true)}><Download className="size-4" />Export</Button>
           <Button variant="primary" onClick={() => setForm({ open: true, initial: null })}><Plus className="size-4" />Add investment</Button>
         </>} />
@@ -162,9 +169,9 @@ export default function Investments() {
           <Segmented size="sm" className="w-full sm:w-72" value={filter} onChange={setFilter} options={[{ value: 'all', label: 'All' }, { value: 'sip', label: 'SIPs' }, { value: 'lumpsum', label: 'Lumpsum' }]} />
         </div>
         {shown.length ? (
-          <div className="anim-rise grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="anim-rise grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {shown.map(({ inv, s }) => (
-              <Holding key={inv.id} inv={inv} s={s} onEdit={() => setForm({ open: true, initial: inv })} onValue={() => setValueFor(inv)} onDelete={() => setDel({ inv, s })} />
+              <Holding key={inv.id} inv={inv} s={s} onEdit={() => setForm({ open: true, initial: inv })} onValue={() => setValueFor(inv)} onDelete={() => setDel({ inv, s })} onPayout={() => setPayoutFor(inv)} />
             ))}
           </div>
         ) : (
@@ -174,10 +181,12 @@ export default function Investments() {
       </div>
 
       <InvestmentForm open={form.open} onOpenChange={(o) => setForm((s) => ({ ...s, open: o }))} initial={form.initial} />
+      <ChitPayoutDialog open={!!payoutFor} onOpenChange={(o) => !o && setPayoutFor(null)} inv={payoutFor} />
       <UpdateValueDialog open={!!valueFor} onOpenChange={(o) => !o && setValueFor(null)} inv={valueFor} />
       <ConfirmDialog open={!!del} onOpenChange={(o) => !o && setDel(null)} icon={Trash2} title={`Delete “${del?.inv.name}”?`}
         points={del ? [`${del.s.count} linked transaction${del.s.count === 1 ? '' : 's'} (${money(del.s.paid)}) will be removed from Transactions too.`, 'Dashboard totals and charts update right away.'] : []}
         onConfirm={() => { deleteInvestment(del.inv.id); toast('Investment deleted', 'info') }} />
+      <ImportDialog open={importOpen} onOpenChange={setImportOpen} />
       <ExportDialog open={exportOpen} onOpenChange={setExportOpen} title="Export investments" defaultPeriod="all" earliest={earliestDate(data)} build={buildReport} />
     </div>
   )

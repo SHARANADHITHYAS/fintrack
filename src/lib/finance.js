@@ -37,7 +37,9 @@ export function totals(txns) {
   const expense = sum(txns.filter(isBudgetExpense), (t) => t.amount)
   const investments = sum(txns.filter(isInvesting), (t) => t.amount)
   const transfers = sum(txns.filter((t) => t.type === 'transfer'), (t) => t.amount)
-  return { income: round2(income), expense: round2(expense), investments: round2(investments), transfers: round2(transfers), net: round2(income - expense - investments) }
+  // Money set aside in savings buckets: deposits minus money taken back (spending from a bucket isn't counted again)
+  const bucket = sum(txns.filter((t) => t.type === 'bucket' && t.action !== 'spend'), (t) => (t.action === 'withdraw' ? -t.amount : t.amount))
+  return { income: round2(income), expense: round2(expense), investments: round2(investments), bucket: round2(bucket), transfers: round2(transfers), net: round2(income - expense - investments - bucket) }
 }
 
 export const sortTxns = (txns) =>
@@ -57,6 +59,57 @@ const BANK_LIKE = ['bank', 'upi', 'debit', 'wallet']
  * Live balance of every bank, wallet, gift card and cash in hand.
  * Credit card spends don't touch these until the bill is paid from one of them.
  */
+/** How one transaction moves money in or out of banks, wallets and cash: [[accountId, signedAmount], …] */
+export function accountEffects(t) {
+  const src = t.mode === 'cash' ? CASH_ID : BANK_LIKE.includes(t.mode) ? t.accountId : null
+  if (!src) return []
+  if (t.type === 'income') return [[src, t.amount]]
+  if (t.type === 'expense') {
+    if (t.mode === 'cc') return []
+    if (t.categoryId === CAT.ATM && src !== CASH_ID) return [[src, -t.amount], [CASH_ID, t.amount]] // ATM: bank → cash
+    return [[src, -t.amount]]
+  }
+  if (t.type === 'transfer') return [[src, -t.amount]]
+  if (t.type === 'bucket') return t.action === 'deposit' ? [[src, -t.amount]] : t.action === 'withdraw' ? [[src, t.amount]] : []
+  return []
+}
+
+/** Every transaction that touched one account, newest first, with its signed effect */
+export function accountTxns(data, accountId) {
+  const out = []
+  for (const t of data.transactions) {
+    const eff = accountEffects(t).filter(([id]) => id === accountId)
+    if (eff.length) out.push({ t, effect: round2(sum(eff, (e) => e[1])) })
+  }
+  return out.sort((a, b) => (a.t.date === b.t.date ? (b.t.createdAt || '').localeCompare(a.t.createdAt || '') : b.t.date.localeCompare(a.t.date)))
+}
+
+/* ---------------- savings buckets ---------------- */
+export function bucketStats(bucket, txns) {
+  const moves = txns.filter((t) => t.type === 'bucket' && t.bucketId === bucket.id)
+  const deposited = round2(sum(moves.filter((t) => t.action === 'deposit'), (t) => t.amount))
+  const withdrawn = round2(sum(moves.filter((t) => t.action === 'withdraw'), (t) => t.amount))
+  const spent = round2(sum(moves.filter((t) => t.action === 'spend'), (t) => t.amount))
+  const balance = round2(deposited - withdrawn - spent)
+  const target = Number(bucket.target) || 0
+  const pctDone = target ? Math.min(100, Math.max(0, (balance / target) * 100)) : 0
+  return { moves: sortTxns(moves), deposited, withdrawn, spent, balance, target, pctDone, reached: target > 0 && balance >= target, remaining: round2(Math.max(0, target - balance)), deposits: moves.filter((t) => t.action === 'deposit').length }
+}
+
+/**
+ * Month-by-month balance: what's left each month after expense, investments and bucket savings,
+ * plus the running net balance that carries forward.
+ */
+export function monthlyBalance(txns, months) {
+  if (!months.length) return []
+  const before = totals(txns.filter((t) => t.date < `${months[0]}-01`)).net
+  let running = before
+  return monthlySeries(txns, months).map((m) => {
+    running = round2(running + m.net)
+    return { ...m, left: m.net, carriedIn: round2(running - m.net), running }
+  })
+}
+
 export function accountBalances(data) {
   const accs = [
     ...allBanks(data).map((b) => ({ ...b, type: 'bank' })),
@@ -73,15 +126,7 @@ export function accountBalances(data) {
     a.count++
     if (!a.last || t.date > a.last) a.last = t.date
   }
-  for (const t of data.transactions) {
-    const src = t.mode === 'cash' ? CASH_ID : BANK_LIKE.includes(t.mode) ? t.accountId : null
-    if (t.type === 'income') { if (src) move(src, t.amount, t) }
-    else if (t.type === 'expense') {
-      if (t.mode === 'cc' || !src) continue
-      move(src, -t.amount, t)
-      if (t.categoryId === CAT.ATM && src !== CASH_ID) move(CASH_ID, t.amount, t) // ATM: bank → cash
-    } else if (t.type === 'transfer' && src) move(src, -t.amount, t)
-  }
+  for (const t of data.transactions) for (const [id, amt] of accountEffects(t)) move(id, amt, t)
   return accs.map((a) => {
     const x = map[a.id]
     return { ...x, inflow: round2(x.inflow), outflow: round2(x.outflow), monthIn: round2(x.monthIn), monthOut: round2(x.monthOut), balance: round2(x.opening + x.inflow - x.outflow) }
@@ -142,7 +187,7 @@ export function sipDates(inv, today = todayISO()) {
   const anchor = fromISO(inv.startDate).getDate()
   for (let k = 0; k < 600; k++) {
     if (inv.tenureMonths && k >= inv.tenureMonths) break
-    const date = addMonths(inv.startDate, k, anchor)
+    const date = addMonths(inv.startDate, k * (Number(inv.freqMonths) || 1), anchor) // chit funds can pay every 2, 3, 4… months
     if (date > today) break
     if (inv.status === 'stopped' && inv.stoppedOn && date > inv.stoppedOn) break
     out.push(date)
@@ -155,7 +200,7 @@ export function nextSipDate(inv, today = todayISO()) {
   const anchor = fromISO(inv.startDate).getDate()
   for (let k = 0; k < 600; k++) {
     if (inv.tenureMonths && k >= inv.tenureMonths) return null
-    const date = addMonths(inv.startDate, k, anchor)
+    const date = addMonths(inv.startDate, k * (Number(inv.freqMonths) || 1), anchor) // chit funds can pay every 2, 3, 4… months
     if (date > today) return date
   }
   return null
@@ -166,13 +211,16 @@ export function investmentStats(inv, txns) {
   const count = linked.length
   const paid = round2(sum(linked, (t) => t.amount))
   const perInvested = inv.investedAmount ?? inv.amountPaid
-  const invested = round2(count * perInvested)
+  // Imported holdings and chit funds: each payment's own amount is what was invested
+  const invested = inv.payments?.length || inv.amounts?.length ? round2(sum(linked, (t) => t.amount)) : round2(count * perInvested)
   const current = round2(Math.max(0, invested + (inv.valueAdj || 0)))
   const returns = round2(current - invested)
   const returnsPct = invested ? (returns / invested) * 100 : 0
   const completed = inv.type === 'sip' && inv.tenureMonths && count >= inv.tenureMonths
   const status = inv.type === 'lumpsum' ? 'active' : inv.status === 'stopped' ? 'stopped' : completed ? 'completed' : 'active'
-  return { count, paid, invested, current, returns, returnsPct, charges: round2(paid - invested), status, next: nextSipDate(inv), linked }
+  // Chit fund payouts are recorded as Investment Income linked to the holding
+  const payouts = txns.filter((t) => t.type === 'income' && t.meta?.chitId === inv.id)
+  return { count, paid, invested, current, returns, returnsPct, charges: round2(paid - invested), status, next: nextSipDate(inv), linked, payouts, payoutTotal: round2(sum(payouts, (t) => t.amount)) }
 }
 
 /* ---------------- EMI ---------------- */
@@ -254,6 +302,20 @@ export function materialize(data, today = todayISO()) {
   const generated = []
 
   for (const inv of data.investments) {
+    // Imported holdings keep a list of individual payments (grouped by name)
+    if (inv.payments?.length) {
+      inv.payments.forEach((p, i) => {
+        const id = `inv_${inv.id}_${i}`
+        generated.push({
+          id, type: 'expense', amount: round2(p.amount), date: p.date,
+          description: inv.name, note: p.note || '', categoryId: CAT.INVESTING,
+          subcategory: invCategoryToPreset(inv.category) || inv.category,
+          mode: p.mode || '', accountId: p.accountId || '', investmentId: inv.id, payIndex: i,
+          createdAt: prev.get(id)?.createdAt || p.createdAt || inv.createdAt,
+        })
+      })
+      continue
+    }
     const dates = sipDates(inv, today)
     dates.forEach((date, k) => {
       if (inv.type === 'sip' && inv.skipped?.includes(k)) return
@@ -262,9 +324,9 @@ export function materialize(data, today = todayISO()) {
       generated.push({
         id,
         type: 'expense',
-        amount: round2(inv.amountPaid),
+        amount: round2(inv.amounts?.[k] ?? inv.amountPaid), // chit funds: a different amount per installment
         date,
-        description: inv.type === 'sip' ? `${inv.name} · SIP #${k + 1}` : inv.name,
+        description: inv.type === 'sip' ? `${inv.name} · ${inv.amounts ? 'Installment' : 'SIP'} #${k + 1}` : inv.name,
         note: inv.description || '',
         categoryId: CAT.INVESTING,
         subcategory: invCategoryToPreset(inv.category) || inv.category,

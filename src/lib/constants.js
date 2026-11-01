@@ -17,8 +17,8 @@ export const INVESTING_PRESETS = ['Mutual Funds', 'Stocks', 'Chit Fund', 'Gold',
 export const DEFAULT_CATEGORIES = [
   { id: CAT.RECHARGE, type: 'expense', name: 'Mobile Recharge', icon: 'Smartphone', color: '#38bdf8' },
   { id: CAT.CC_PAYMENT, type: 'expense', name: 'Credit Card Payment', icon: 'CreditCard', color: '#60a5fa' },
-  { id: 'exp-rent', type: 'expense', name: 'House Rent', icon: 'House', color: '#a78bfa' },
-  { id: 'exp-education', type: 'expense', name: 'Education', icon: 'GraduationCap', color: '#818cf8' },
+  { id: 'exp-rent', type: 'expense', name: 'House Rent', icon: 'House', color: '#8c6d4f' },
+  { id: 'exp-education', type: 'expense', name: 'Education', icon: 'GraduationCap', color: '#4f7cac' },
   { id: 'exp-groceries', type: 'expense', name: 'Groceries', icon: 'ShoppingBasket', color: '#34d399' },
   { id: 'exp-travel', type: 'expense', name: 'Travel', icon: 'Plane', color: '#22d3ee' },
   { id: 'exp-health', type: 'expense', name: 'Healthcare', icon: 'HeartPulse', color: '#f87171' },
@@ -27,20 +27,20 @@ export const DEFAULT_CATEGORIES = [
   { id: 'exp-food', type: 'expense', name: 'Food', icon: 'UtensilsCrossed', color: '#fb7185' },
   { id: CAT.ENTERTAINMENT, type: 'expense', name: 'Entertainment', icon: 'Clapperboard', color: '#f472b6', subcategories: ['Trip', 'Movie', 'Games'] },
   { id: CAT.OTT, type: 'expense', name: 'OTT', icon: 'Tv', color: '#e879f9', subcategories: ['Netflix', 'Amazon Prime Video', 'JioHotstar', 'SonyLIV', 'ZEE5', 'YouTube Premium', 'Spotify', 'Aha'], subRequired: true, subLabel: 'Which OTT?' },
-  { id: 'exp-personal', type: 'expense', name: 'Personal Care', icon: 'Sparkles', color: '#c084fc' },
+  { id: 'exp-personal', type: 'expense', name: 'Personal Care', icon: 'Sparkles', color: '#d97757' },
   { id: 'exp-shopping', type: 'expense', name: 'Shopping', icon: 'ShoppingBag', color: '#fbbf24' },
   { id: CAT.ATM, type: 'expense', name: 'ATM Withdrawal', icon: 'Banknote', color: '#94a3b8' },
   { id: CAT.INVESTING, type: 'expense', name: 'Investing', icon: 'TrendingUp', color: '#2dd4bf', subcategories: INVESTING_PRESETS },
 
   { id: 'inc-salary', type: 'income', name: 'Salary / Freelance', icon: 'Briefcase', color: '#2dd4bf' },
-  { id: 'inc-family', type: 'income', name: 'Family', icon: 'Users', color: '#a78bfa' },
+  { id: 'inc-family', type: 'income', name: 'Family', icon: 'Users', color: '#4f7cac' },
   { id: 'inc-relations', type: 'income', name: 'Relations', icon: 'HeartHandshake', color: '#f472b6' },
   { id: CAT.INV_INCOME, type: 'income', name: 'Investment Income', icon: 'Coins', color: '#fbbf24' },
   { id: 'inc-bonus', type: 'income', name: 'Bonus', icon: 'Award', color: '#34d399' },
   { id: CAT.GIFT_CARD, type: 'income', name: 'Gift Card', icon: 'Gift', color: '#fb923c' },
 ]
 
-export const CUSTOM_COLORS = ['#2dd4bf', '#a78bfa', '#fb7185', '#60a5fa', '#fbbf24', '#34d399', '#f472b6', '#38bdf8', '#fb923c', '#a3e635', '#c084fc', '#22d3ee', '#facc15', '#818cf8', '#4ade80', '#f87171']
+export const CUSTOM_COLORS = ['#2dd4bf', '#8c6d4f', '#fb7185', '#60a5fa', '#fbbf24', '#34d399', '#f472b6', '#38bdf8', '#fb923c', '#a3e635', '#d97757', '#22d3ee', '#facc15', '#4f7cac', '#4ade80', '#f87171']
 
 export const INVESTMENT_INCOME_TYPES = ['Dividend', 'FD Interest', 'Chit Fund Amount', 'Mutual Fund / Stock Gains', 'RD / Savings Interest', 'Rental Income']
 
@@ -74,7 +74,7 @@ export const ALL_MODES = [...EXPENSE_MODES, ...INCOME_MODES.filter((m) => m.valu
 export const modeLabel = (v) => ALL_MODES.find((m) => m.value === v)?.label ?? (v === 'bank' ? 'Bank account' : v || '—')
 
 export const INVESTMENT_CATEGORIES = [
-  { name: 'Mutual Funds', color: '#a78bfa' },
+  { name: 'Mutual Funds', color: '#2f8f83' },
   { name: 'FD', color: '#60a5fa' },
   { name: 'RD', color: '#38bdf8' },
   { name: 'Gold', color: '#fbbf24' },
@@ -83,7 +83,7 @@ export const INVESTMENT_CATEGORIES = [
   { name: 'PPF', color: '#34d399' },
   { name: 'NPS', color: '#4ade80' },
   { name: 'Real Estate', color: '#fb923c' },
-  { name: 'Bonds', color: '#818cf8' },
+  { name: 'Bonds', color: '#4f7cac' },
   { name: 'Crypto', color: '#f472b6' },
   { name: 'Chit Fund', color: '#fb7185' },
   { name: 'Custom', color: '#94a3b8' },
@@ -115,10 +115,10 @@ export const PAYMENT_STATUSES = [
 export const cardStatusLabel = (v) => CARD_STATUSES.find((s) => s.value === v)?.label ?? 'Unpaid'
 
 export const CARD_THEMES = [
-  { id: 'aurora', from: '#0f766e', via: '#0e7490', to: '#6d28d9' },
-  { id: 'violet', from: '#4c1d95', via: '#6d28d9', to: '#db2777' },
+  { id: 'aurora', from: '#0f766e', via: '#0f5f59', to: '#0f766e' },
+  { id: 'violet', from: '#7f1d1d', via: '#7a2e3a', to: '#7f1d1d' },
   { id: 'ocean', from: '#1e3a8a', via: '#2563eb', to: '#06b6d4' },
-  { id: 'sunset', from: '#9a3412', via: '#e11d48', to: '#7c3aed' },
+  { id: 'sunset', from: '#9a3412', via: '#a4471c', to: '#9a3412' },
   { id: 'midnight', from: '#0f172a', via: '#1e293b', to: '#334155' },
   { id: 'emerald', from: '#064e3b', via: '#047857', to: '#65a30d' },
 ]

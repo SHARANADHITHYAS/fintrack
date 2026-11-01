@@ -11,12 +11,10 @@ function Shell({ title, subtitle, children, footer }) {
     <div className="app-bg grid min-h-dvh lg:grid-cols-[1.05fr_1fr]">
       {/* Brand side */}
       <aside className="relative hidden overflow-hidden border-r border-line lg:flex lg:flex-col lg:justify-between lg:p-12">
-        <div className="pointer-events-none absolute -top-40 -left-24 size-[480px] rounded-full bg-teal/15 blur-3xl" />
-        <div className="pointer-events-none absolute -right-24 -bottom-40 size-[520px] rounded-full bg-violet/20 blur-3xl" />
         <Logo />
         <div className="relative">
           <h2 className="font-display text-[40px] leading-[1.1] font-extrabold tracking-tight text-fg">
-            Every rupee,<br /><span className="bg-[linear-gradient(90deg,var(--teal),var(--violet))] bg-clip-text text-transparent">beautifully tracked.</span>
+            Every rupee,<br /><span className="text-teal">beautifully tracked.</span>
           </h2>
           <p className="mt-4 max-w-md text-[15px] text-muted">Income, expenses, SIPs, credit cards and EMIs in one calm place. Financial tracking is a habit, and it starts today.</p>
           <div className="mt-10 grid max-w-md gap-3">
@@ -25,7 +23,7 @@ function Shell({ title, subtitle, children, footer }) {
               { i: PiggyBank, t: 'Hit your savings goal', s: 'Green bars feel good, trust us' },
               { i: CreditCard, t: 'Cards and EMIs in sync', s: 'Outstanding, limits and bills, all automatic' },
             ].map(({ i: I, t, s }) => (
-              <div key={t} className="flex items-center gap-3.5 rounded-2xl border border-line bg-card/70 p-3.5 backdrop-blur">
+              <div key={t} className="flex items-center gap-3.5 rounded-2xl border border-line bg-card/70 p-3.5">
                 <span className="grid size-10 place-items-center rounded-xl bg-teal-soft text-teal"><I className="size-5" /></span>
                 <div><div className="text-sm font-bold text-fg">{t}</div><div className="text-[12.5px] text-muted">{s}</div></div>
               </div>
@@ -123,7 +121,7 @@ export function RegisterPage() {
     <Shell title="Start your money journey ✨" subtitle="Create your account in 20 seconds. Your future self will thank you."
       footer={<>Already have an account? <Link to="/login" className="font-bold text-teal hover:underline">Log in</Link></>}>
       <form onSubmit={submit} className="space-y-4" noValidate>
-        <Field label="Your name" error={err.name}><IconInput icon={User} autoComplete="name" placeholder="Sharan" value={f.name} onChange={set('name')} invalid={!!err.name} /></Field>
+        <Field label="Your name" error={err.name}><IconInput icon={User} autoComplete="name" placeholder="Your full name" value={f.name} onChange={set('name')} invalid={!!err.name} /></Field>
         <Field label="Email" error={err.email}><IconInput icon={Mail} type="email" autoComplete="email" placeholder="you@example.com" value={f.email} onChange={set('email')} invalid={!!err.email} /></Field>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Password" error={err.password}><PasswordInput autoComplete="new-password" placeholder="6+ characters" value={f.password} onChange={set('password')} /></Field>

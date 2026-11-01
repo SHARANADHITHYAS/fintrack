@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { CalendarClock, CreditCard, Gauge, HandCoins, MoreVertical, Pencil, Plus, Trash2, Users, Wallet, ArrowRight } from 'lucide-react'
+import { CalendarClock, CreditCard, Gauge, HandCoins, MoreVertical, Pencil, Plus, Trash2, Users, Wallet, ArrowRight, Upload } from 'lucide-react'
 import { Badge, Button, Card, ConfirmDialog, EmptyState, Menu } from '../components/ui'
 import { PageHero } from '../components/common'
 import { CardFormDialog, CardVisual, StatusBadge } from '../components/CardParts'
 import { useTxnEditor } from '../components/TxnEditor'
+import ImportDialog from '../components/ImportDialog'
 import { useData } from '../context/DataContext'
 import { useToast } from '../context/ToastContext'
 import { cardStats, filterRange } from '../lib/finance'
@@ -33,6 +34,7 @@ export default function Cards() {
   const { openNew, dialogs } = useTxnEditor()
   const [form, setForm] = useState({ open: false, initial: null })
   const [del, setDel] = useState(null)
+  const [importOpen, setImportOpen] = useState(false)
 
   const list = data.cards.map((c) => ({ card: c, s: cardStats(c, data) }))
   const totLimit = sum(list, (x) => x.s.limit), totOut = sum(list, (x) => x.s.outstanding), totEmi = sum(list, (x) => x.s.monthlyEmi)
@@ -42,7 +44,10 @@ export default function Cards() {
 
   return (
     <div className="space-y-5 sm:space-y-6">
-      <PageHero title="Credit cards" subtitle={lineFor('cards')} right={<Button variant="primary" onClick={() => setForm({ open: true, initial: null })}><Plus className="size-4" />Add card</Button>} />
+      <PageHero title="Credit cards" subtitle={lineFor('cards')} right={<>
+        <Button variant="secondary" onClick={() => setImportOpen(true)}><Upload className="size-4" />Import</Button>
+        <Button variant="primary" onClick={() => setForm({ open: true, initial: null })}><Plus className="size-4" />Add card</Button>
+      </>} />
 
       {list.length > 0 && (
         <div className="anim-rise grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
@@ -60,7 +65,7 @@ export default function Cards() {
               <CardVisual card={card} stats={s} onClick={() => nav(`/cards/${card.id}`)}
                 action={
                   <span onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
-                    <Menu trigger={<button className="grid size-8 cursor-pointer place-items-center rounded-lg bg-white/15 text-white backdrop-blur hover:bg-white/25" aria-label={`${card.name} actions`}><MoreVertical className="size-4" /></button>}
+                    <Menu trigger={<button className="grid size-8 cursor-pointer place-items-center rounded-lg bg-white/15 text-white hover:bg-white/25" aria-label={`${card.name} actions`}><MoreVertical className="size-4" /></button>}
                       items={[
                         { label: 'Open details', icon: ArrowRight, onSelect: () => nav(`/cards/${card.id}`) },
                         { label: 'Pay bill', icon: HandCoins, onSelect: () => openNew({ type: 'expense', categoryId: CAT.CC_PAYMENT, toCardId: card.id }) },
@@ -104,6 +109,7 @@ export default function Cards() {
       <ConfirmDialog open={!!del} onOpenChange={(o) => !o && setDel(null)} icon={Trash2} title={`Delete ${del?.card.name}?`}
         points={del ? [`Its ${del.s.txns.length} transaction${del.s.txns.length === 1 ? '' : 's'} stay in Transactions, marked as a removed card.`, del.s.plans.length ? `${del.s.plans.length} EMI plan${del.s.plans.length > 1 ? 's' : ''} on this card will be removed.` : 'No EMI plans on this card.'] : []}
         onConfirm={() => { deleteCard(del.card.id); toast('Card deleted', 'info') }} />
+      <ImportDialog open={importOpen} onOpenChange={setImportOpen} />
       {dialogs}
     </div>
   )

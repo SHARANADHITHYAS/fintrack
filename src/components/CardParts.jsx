@@ -17,11 +17,9 @@ export function CardVisual({ card, stats, onClick, className, action }) {
       tabIndex={onClick ? 0 : undefined}
       onClick={onClick}
       onKeyDown={(e) => { if (onClick && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); onClick() } }}
-      className={cn('group relative isolate overflow-hidden rounded-[26px] p-5 text-white shadow-[0_24px_50px_-24px_rgba(0,0,0,.6)] transition-transform', onClick && 'cursor-pointer hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-teal focus-visible:outline-none', className)}
-      style={{ background: `linear-gradient(135deg, ${th.from} 0%, ${th.via} 55%, ${th.to} 100%)` }}
+      className={cn('group relative isolate overflow-hidden rounded-[26px] p-5 text-white transition-transform', onClick && 'cursor-pointer hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-teal focus-visible:outline-none', className)}
+      style={{ background: th.via }}
     >
-      <div className="pointer-events-none absolute -top-16 -right-10 -z-10 size-48 rounded-full bg-white/10 blur-2xl" />
-      <div className="pointer-events-none absolute -bottom-20 -left-10 -z-10 size-52 rounded-full bg-black/15 blur-2xl" />
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <div className="truncate font-display text-[17px] font-bold">{card.name}</div>
@@ -38,7 +36,7 @@ export function CardVisual({ card, stats, onClick, className, action }) {
           <div className="tabular font-display text-2xl font-extrabold">{money(stats.available)}</div>
           <div className="text-[11.5px] text-white/75">of {money(stats.limit)} limit</div>
         </div>
-        <span className="rounded-full bg-white/20 px-2.5 py-1 text-[11px] font-bold backdrop-blur">{cardStatusLabel(card.status)}</span>
+        <span className="rounded-full bg-white/20 px-2.5 py-1 text-[11px] font-bold">{cardStatusLabel(card.status)}</span>
       </div>
       <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/20">
         <div className="h-full rounded-full bg-white transition-all" style={{ width: `${stats.usedPct}%` }} />
@@ -92,7 +90,7 @@ export function CardFormDialog({ open, onOpenChange, initial }) {
           {CARD_THEMES.map((t) => (
             <button key={t.id} type="button" aria-label={`${t.id} theme`} onClick={() => set({ theme: t.id })}
               className={cn('size-8 cursor-pointer rounded-full ring-offset-2 ring-offset-card transition-all', f.theme === t.id && 'ring-2 ring-teal')}
-              style={{ background: `linear-gradient(135deg, ${t.from}, ${t.to})` }} />
+              style={{ background: t.via }} />
           ))}
         </div>
         <div className="grid gap-3 sm:grid-cols-2">

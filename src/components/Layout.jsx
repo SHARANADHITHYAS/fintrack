@@ -17,7 +17,7 @@ export const NAV = [
 export function Logo({ className }) {
   return (
     <div className={cn('flex items-center gap-2.5', className)}>
-      <span className="grid size-9 place-items-center rounded-xl bg-[linear-gradient(135deg,var(--teal),var(--violet))] font-display text-lg font-extrabold text-[#04110f] shadow-[0_0_22px_-6px_var(--teal)]">₹</span>
+      <span className="grid size-9 place-items-center rounded-[10px] bg-teal font-display text-lg font-extrabold text-on-teal">₹</span>
       <span className="font-display text-[19px] font-extrabold tracking-tight text-fg">Fin<span className="text-teal">Track</span></span>
     </div>
   )
@@ -40,14 +40,14 @@ export default function Layout() {
 
   return (
     <div className="app-bg min-h-dvh">
-      <header className="sticky top-0 z-40 border-b border-line bg-[color-mix(in_srgb,var(--bg)_78%,transparent)] backdrop-blur-xl">
+      <header className="sticky top-0 z-40 border-b border-line bg-bg">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4 sm:px-6">
           <NavLink to="/" aria-label="FinTrack home"><Logo /></NavLink>
           <nav className="hidden items-center gap-1 md:flex" aria-label="Main">
             {NAV.map((n) => (
               <NavLink key={n.to} to={n.to} end={n.end}
                 className={({ isActive }) => cn('flex items-center gap-2 rounded-xl px-3 py-2 text-[13.5px] font-semibold transition-all lg:px-3.5',
-                  isActive ? 'bg-teal text-on-teal shadow-[0_0_20px_-6px_var(--teal)]' : 'text-muted hover:bg-card-2 hover:text-fg')}>
+                  isActive ? 'bg-card-2 text-fg' : 'text-muted hover:bg-card-2 hover:text-fg')}>
                 <n.icon className="size-[18px]" />
                 <span className="hidden lg:inline">{n.label}</span>
               </NavLink>
@@ -56,7 +56,7 @@ export default function Layout() {
           <div className="flex items-center gap-2">
             <ThemeButton />
             <Menu
-              trigger={<button className="grid size-10 cursor-pointer place-items-center rounded-full bg-[linear-gradient(135deg,var(--net),var(--violet))] text-sm font-bold text-white ring-2 ring-transparent transition hover:ring-teal/50" aria-label="Account menu">{initials(user?.name)}</button>}
+              trigger={<button className="grid size-10 cursor-pointer place-items-center rounded-full bg-primary text-sm font-semibold text-on-primary ring-2 ring-transparent transition hover:ring-line" aria-label="Account menu">{initials(user?.name)}</button>}
               items={[
                 { label: user?.name || 'Profile', icon: User, onSelect: () => nav('/settings') },
                 { label: 'Log out', icon: LogOut, danger: true, onSelect: () => { logout(); nav('/login') } },
@@ -71,16 +71,16 @@ export default function Layout() {
       </main>
 
       {/* Mobile bottom navigation */}
-      <nav aria-label="Main" className="pb-safe fixed inset-x-0 bottom-0 z-40 border-t border-line bg-[color-mix(in_srgb,var(--card)_88%,transparent)] backdrop-blur-xl md:hidden">
+      <nav aria-label="Main" className="pb-safe fixed inset-x-0 bottom-0 z-40 border-t border-line bg-card md:hidden">
         <div className="mx-auto grid max-w-lg grid-cols-5 px-2 pt-2 pb-2">
           {NAV.map((n) => (
             <NavLink key={n.to} to={n.to} end={n.end} className="flex flex-col items-center gap-1 text-[10.5px] font-semibold">
               {({ isActive }) => (
                 <>
-                  <span className={cn('grid h-8 w-12 place-items-center rounded-xl transition-all', isActive ? 'bg-teal text-on-teal shadow-[0_0_18px_-4px_var(--teal)]' : 'text-muted')}>
+                  <span className={cn('grid h-8 w-12 place-items-center rounded-xl transition-all', isActive ? 'bg-card-2 text-fg' : 'text-muted')}>
                     <n.icon className="size-5" />
                   </span>
-                  <span className={isActive ? 'text-teal' : 'text-muted'}>{n.short}</span>
+                  <span className={isActive ? 'text-fg' : 'text-muted'}>{n.short}</span>
                 </>
               )}
             </NavLink>

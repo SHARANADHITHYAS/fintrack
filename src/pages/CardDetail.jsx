@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, CalendarClock, Download, HandCoins, MoreVertical, Pencil, Plus, Receipt, Trash2, Wallet, Gauge, ShoppingCart } from 'lucide-react'
+import { ArrowLeft, CalendarClock, Download, HandCoins, MoreVertical, Pencil, Plus, Receipt, Trash2, Wallet, Gauge, ShoppingCart, Upload } from 'lucide-react'
 import { Badge, Button, Card, CardHeader, ConfirmDialog, EmptyState, Field, Menu, Select } from '../components/ui'
 import { CardFormDialog, CardVisual } from '../components/CardParts'
 import { TxnRow } from '../components/TransactionList'
 import { useTxnEditor } from '../components/TxnEditor'
 import ExportDialog from '../components/ExportDialog'
+import ImportDialog from '../components/ImportDialog'
 import { MiniStat } from './Cards'
 import { txnReport } from './Transactions'
 import { useData } from '../context/DataContext'
@@ -24,6 +25,7 @@ export default function CardDetail() {
   const [del, setDel] = useState(false)
   const [delEmi, setDelEmi] = useState(null)
   const [exportOpen, setExportOpen] = useState(false)
+  const [importOpen, setImportOpen] = useState(false)
   const card = data.cards.find((c) => c.id === id)
 
   if (!card) {
@@ -38,6 +40,7 @@ export default function CardDetail() {
       <div className="flex items-center justify-between gap-3">
         <Link to="/cards" className="inline-flex items-center gap-1.5 text-[13.5px] font-semibold text-muted hover:text-fg"><ArrowLeft className="size-4" />All cards</Link>
         <div className="flex gap-2">
+          <Button variant="secondary" size="sm" onClick={() => setImportOpen(true)}><Upload className="size-4" /><span className="hidden sm:inline">Import</span></Button>
           <Button variant="secondary" size="sm" onClick={() => setExportOpen(true)}><Download className="size-4" /><span className="hidden sm:inline">Export statement</span></Button>
           <Menu trigger={<Button variant="secondary" size="icon" className="!size-9" aria-label="Card actions"><MoreVertical className="size-4" /></Button>}
             items={[{ label: 'Edit card', icon: Pencil, onSelect: () => setEdit(true) }, { label: 'Delete card', icon: Trash2, danger: true, onSelect: () => setDel(true) }]} />
@@ -87,7 +90,7 @@ export default function CardDetail() {
                   </div>
                   {done ? <Badge tone="inc">Completed</Badge> : <Badge tone="violet">{money(emi)}/mo</Badge>}
                 </div>
-                <div className="mt-3 h-2 overflow-hidden rounded-full bg-card"><div className="h-full rounded-full bg-[linear-gradient(90deg,var(--teal),var(--violet))]" style={{ width: `${(paid / plan.tenure) * 100}%` }} /></div>
+                <div className="mt-3 h-2 overflow-hidden rounded-full bg-card"><div className="h-full rounded-full bg-teal" style={{ width: `${(paid / plan.tenure) * 100}%` }} /></div>
                 <div className="mt-2 flex flex-wrap justify-between gap-2 text-[12px] text-muted">
                   <span><b className="text-fg">{remaining}</b> of {plan.tenure} months remaining</span>
                   <span>{next ? <>Next: <b className="text-fg">{fmtDate(next)}</b></> : `Total ${money(total)}`}</span>
@@ -127,6 +130,7 @@ export default function CardDetail() {
           if (s.plans.length) rep.rows.push(...s.plans.map(({ plan, emi, remaining }) => ({ date: fmtDate(plan.startDate), type: 'EMI plan', title: plan.itemName, category: '', mode: 'Credit card', account: card.name, amount: -plan.principal, notes: `${money(emi)}/mo · ${remaining} of ${plan.tenure} months left` })))
           return rep
         }} />
+      <ImportDialog open={importOpen} onOpenChange={setImportOpen} />
       {dialogs}
     </div>
   )

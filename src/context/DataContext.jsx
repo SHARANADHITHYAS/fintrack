@@ -4,6 +4,7 @@ import { materialize, findCategory, accountName, nextCustomColor, investmentStat
 import { CAT, FRIEND_CC, presetToInvCategory } from '../lib/constants'
 import { monthKeyOf, money, round2, todayISO, uid } from '../lib/utils'
 import { buildDemoData } from '../lib/demo'
+import { applyImport } from '../lib/importer'
 
 const DataContext = createContext(null)
 const now = () => new Date().toISOString()
@@ -170,6 +171,10 @@ export function DataProvider({ userId, children }) {
     if (!t) return d
     if (t.investmentId) {
       const inv = d.investments.find((i) => i.id === t.investmentId)
+      if (inv?.payments?.length > 1) {
+        // Imported holding: remove just this payment
+        return { ...d, investments: d.investments.map((i) => (i.id === inv.id ? { ...i, payments: i.payments.filter((_, k) => k !== t.payIndex) } : i)) }
+      }
       if (inv?.type === 'sip') return { ...d, investments: d.investments.map((i) => (i.id === inv.id ? { ...i, skipped: [...(i.skipped || []), t.sipIndex] } : i)) }
       return { ...d, investments: d.investments.filter((i) => i.id !== t.investmentId) }
     }
@@ -224,11 +229,40 @@ export function DataProvider({ userId, children }) {
 
   /* ---------- account balances ---------- */
   /** Set an account's real balance today; we store the matching starting balance. */
+  /* ---------- import ---------- */
+  const importTransactions = useCallback((items, maps) => update((d) => applyImport(d, items, maps)), [update])
+
   const setAccountBalance = useCallback((id, target) => update((d) => {
     const acc = accountBalances(d).find((a) => a.id === id)
     if (!acc) return d
     const opening = round2(Number(target) - (acc.inflow - acc.outflow))
     return { ...d, openingBalances: { ...(d.openingBalances || {}), [id]: opening } }
+  }), [update])
+
+  /* ---------- savings buckets ---------- */
+  const saveBucket = useCallback((b) => {
+    const id = b.id || uid('bkt')
+    update((d) => {
+      const list = d.buckets || []
+      const next = { icon: 'PiggyBank', ...list.find((x) => x.id === id), ...b, id, target: round2(b.target), createdAt: b.createdAt || list.find((x) => x.id === id)?.createdAt || now() }
+      return { ...d, buckets: list.some((x) => x.id === id) ? list.map((x) => (x.id === id ? next : x)) : [...list, next] }
+    })
+    return id
+  }, [update])
+  /** Deleting a bucket removes its history; deposits go back to the accounts they came from */
+  const deleteBucket = useCallback((id) => update((d) => ({ ...d, buckets: (d.buckets || []).filter((b) => b.id !== id), transactions: d.transactions.filter((t) => !(t.type === 'bucket' && t.bucketId === id)) })), [update])
+  /** action: deposit (account → bucket) | withdraw (bucket → account) | spend (buy something with bucket money) */
+  const saveBucketMove = useCallback((m) => update((d) => {
+    const existing = m.id ? d.transactions.find((t) => t.id === m.id) : null
+    const txn = {
+      id: existing?.id || uid('bkm'), type: 'bucket', bucketId: m.bucketId, action: m.action,
+      amount: round2(m.amount), date: m.date, description: m.description?.trim() || '',
+      categoryId: m.action === 'spend' ? m.categoryId || '' : '', subcategory: '',
+      mode: m.action === 'spend' ? '' : m.mode, accountId: m.action === 'spend' ? '' : m.accountId || '',
+      meta: {}, createdAt: existing?.createdAt || now(),
+    }
+    const transactions = existing ? d.transactions.map((t) => (t.id === txn.id ? txn : t)) : [...d.transactions, txn]
+    return { ...d, transactions }
   }), [update])
 
   /* ---------- goals & prefs ---------- */
@@ -249,13 +283,19 @@ export function DataProvider({ userId, children }) {
     const out = []
     if (t.investmentId) {
       const inv = data.investments.find((i) => i.id === t.investmentId)
-      if (inv?.type === 'sip') out.push(`This skips SIP installment #${(t.sipIndex ?? 0) + 1} of “${inv.name}”. The SIP and its other installments stay.`)
+      if (inv?.payments?.length > 1) out.push(`This removes one payment from “${inv.name}”. The holding and its other payments stay.`)
+      else if (inv?.type === 'sip') out.push(`This skips SIP installment #${(t.sipIndex ?? 0) + 1} of “${inv.name}”. The SIP and its other installments stay.`)
       else out.push(`The linked investment “${inv?.name ?? 'Investment'}” is removed from Investments too.`)
     } else if (t.emiId) {
       const plan = data.emis.find((p) => p.id === t.emiId)
       if (plan) out.push(`This removes the EMI plan “${plan.itemName}”, all its installments and the original ${money(plan.principal)} purchase. The card's available limit goes back up by ${money(plan.principal)}.`)
     } else if (t.type === 'expense' && t.mode === 'cc' && t.accountId && t.accountId !== FRIEND_CC) {
       out.push(`${accountName(data, 'cc', t.accountId)}: outstanding drops by ${money(t.amount)} and available limit goes up.`)
+    } else if (t.type === 'bucket') {
+      const b = (data.buckets || []).find((x) => x.id === t.bucketId)
+      out.push(t.action === 'deposit' ? `${money(t.amount)} goes back to ${accountName(data, t.mode, t.accountId) || 'your account'} and out of the “${b?.name ?? 'bucket'}” bucket.`
+        : t.action === 'withdraw' ? `${money(t.amount)} goes back into the “${b?.name ?? 'bucket'}” bucket.`
+        : `${money(t.amount)} is returned to the “${b?.name ?? 'bucket'}” bucket balance.`)
     } else if (t.type === 'transfer' && t.toCardId && t.toCardId !== FRIEND_CC) {
       out.push(`${accountName(data, 'cc', t.toCardId)}: this payment is undone, so outstanding goes back up by ${money(t.amount)}.`)
     }
@@ -267,8 +307,8 @@ export function DataProvider({ userId, children }) {
     data, addCategory, removeCategory, addBank, removeBank, addWallet, removeWallet,
     saveCard, setCardStatus, deleteCard, saveTransaction, deleteTransaction, deleteEmi,
     saveInvestment, updateInvestmentValue, setSipStatus, deleteInvestment,
-    setGoal, removeGoal, setPrefs, loadDemo, resetData, deleteImpact, setAccountBalance, addSubcategory,
-  }), [data, addCategory, removeCategory, addBank, removeBank, addWallet, removeWallet, saveCard, setCardStatus, deleteCard, saveTransaction, deleteTransaction, deleteEmi, saveInvestment, updateInvestmentValue, setSipStatus, deleteInvestment, setGoal, removeGoal, setPrefs, loadDemo, resetData, deleteImpact, setAccountBalance, addSubcategory])
+    setGoal, removeGoal, setPrefs, loadDemo, resetData, deleteImpact, setAccountBalance, addSubcategory, saveBucket, deleteBucket, saveBucketMove, importTransactions,
+  }), [data, addCategory, removeCategory, addBank, removeBank, addWallet, removeWallet, saveCard, setCardStatus, deleteCard, saveTransaction, deleteTransaction, deleteEmi, saveInvestment, updateInvestmentValue, setSipStatus, deleteInvestment, setGoal, removeGoal, setPrefs, loadDemo, resetData, deleteImpact, setAccountBalance, addSubcategory, saveBucket, deleteBucket, saveBucketMove, importTransactions])
 
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>
 }

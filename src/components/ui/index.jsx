@@ -7,18 +7,18 @@ import { cn } from '../../lib/utils'
 
 /* ---------- Button ---------- */
 const variants = {
-  primary: 'bg-teal text-on-teal shadow-[0_0_24px_-8px_var(--teal)] hover:brightness-110',
-  secondary: 'bg-card-2 text-fg border border-line hover:border-teal/60',
+  primary: 'bg-primary text-on-primary hover:opacity-90',
+  secondary: 'bg-card text-fg border border-line hover:bg-card-2',
   ghost: 'text-muted hover:text-fg hover:bg-card-2',
-  soft: 'bg-teal-soft text-teal border border-teal/40 hover:shadow-[0_0_18px_-4px_var(--teal)]',
+  soft: 'bg-teal-soft text-teal hover:brightness-95 dark:hover:brightness-125',
   danger: 'bg-exp text-white hover:brightness-110',
   'danger-soft': 'bg-exp-soft text-exp border border-exp/30 hover:brightness-110',
 }
 const sizes = {
-  sm: 'h-9 px-3 text-[13px] rounded-xl gap-1.5',
-  md: 'h-11 px-4 text-sm rounded-xl gap-2',
-  lg: 'h-12 px-5 text-[15px] rounded-2xl gap-2',
-  icon: 'size-10 rounded-xl',
+  sm: 'h-8 px-3 text-[13px] rounded-lg gap-1.5',
+  md: 'h-10 px-4 text-sm rounded-[10px] gap-2',
+  lg: 'h-11 px-5 text-[15px] rounded-xl gap-2',
+  icon: 'size-10 rounded-[10px]',
   'icon-sm': 'size-8 rounded-lg',
 }
 export const Button = forwardRef(function Button({ variant = 'secondary', size = 'md', className, type = 'button', ...props }, ref) {
@@ -33,13 +33,13 @@ export const Button = forwardRef(function Button({ variant = 'secondary', size =
 })
 
 /* ---------- Card ---------- */
-export const Card = ({ className, ...p }) => <div className={cn('rounded-3xl bg-card shadow-glow', className)} {...p} />
+export const Card = ({ className, ...p }) => <div className={cn('rounded-2xl border border-line bg-card', className)} {...p} />
 export const CardHeader = ({ title, subtitle, action, className, icon: Icon }) => (
   <div className={cn('flex items-start justify-between gap-3', className)}>
     <div className="flex min-w-0 items-start gap-3">
-      {Icon && <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-violet-soft text-violet"><Icon className="size-[18px]" /></span>}
+      {Icon && <Icon className="mt-0.5 size-4 shrink-0 text-muted" />}
       <div className="min-w-0">
-        <h3 className="font-display text-[15px] font-bold text-fg sm:text-base">{title}</h3>
+        <h3 className="text-[15px] font-semibold text-fg">{title}</h3>
         {subtitle && <p className="mt-0.5 text-[12.5px] text-muted">{subtitle}</p>}
       </div>
     </div>
@@ -61,7 +61,7 @@ export function Field({ label, required, optional, hint, error, children, classN
   return (
     <div className={cn('flex min-w-0 flex-col gap-1.5', className)}>
       {label && (
-        <span className="text-[12.5px] font-semibold text-muted">
+        <span className="text-[12.5px] font-medium text-muted">
           {label}
           {required && <span className="text-exp"> *</span>}
           {optional && <span className="font-normal text-faint"> (optional)</span>}
@@ -83,13 +83,13 @@ export const Select = forwardRef(function Select({ className, invalid, children,
 })
 export function MoneyInput({ value, onChange, invalid, className, big, ...p }) {
   return (
-    <div className={cn('ft-input flex items-center gap-2 !px-3.5', big && '!h-14', invalid && '!border-exp', className)} style={{ padding: 0 }}>
-      <span className={cn('font-bold text-faint', big ? 'text-xl' : 'text-base')}>₹</span>
+    <div className={cn('ft-input flex items-center gap-2 !px-3.5', big && '!h-12', invalid && '!border-exp', className)} style={{ padding: 0 }}>
+      <span className={cn('font-semibold text-faint', big ? 'text-lg' : 'text-[15px]')}>₹</span>
       <input
         inputMode="decimal"
         value={value}
         onChange={(e) => onChange(e.target.value.replace(/[^\d.]/g, '').replace(/(\..*)\./g, '$1'))}
-        className={cn('tabular h-full min-w-0 flex-1 bg-transparent font-bold text-fg outline-none placeholder:font-medium placeholder:text-faint', big ? 'text-2xl' : 'text-[15px]')}
+        className={cn('tabular h-full min-w-0 flex-1 bg-transparent font-semibold text-fg outline-none placeholder:font-normal placeholder:text-faint', big ? 'text-xl' : 'text-[15px]')}
         {...p}
       />
     </div>
@@ -109,8 +109,8 @@ export function Segmented({ value, onChange, options, className, size = 'md' }) 
             role="tab"
             aria-selected={active}
             onClick={() => onChange(o.value)}
-            className={cn('flex cursor-pointer items-center justify-center gap-1.5 rounded-xl font-semibold transition-all', size === 'sm' ? 'h-8 text-[12.5px]' : 'h-10 text-sm',
-              active ? (o.activeClass ?? 'bg-teal text-on-teal shadow-[0_0_18px_-6px_var(--teal)]') : 'text-muted hover:text-fg')}
+            className={cn('flex cursor-pointer items-center justify-center gap-1.5 rounded-xl font-semibold transition-all', size === 'sm' ? 'h-7 text-[12.5px]' : 'h-8 text-[13.5px]',
+              active ? (o.activeClass ?? 'bg-card text-fg shadow-[0_1px_2px_rgba(0,0,0,.08)] ring-1 ring-line') : 'text-muted hover:text-fg')}
           >
             {o.icon && <o.icon className="size-4" />}
             {o.label}
@@ -134,29 +134,29 @@ export function Switch({ checked, onChange, label, id }) {
 
 /* ---------- Dialog (bottom sheet on mobile) ---------- */
 export function Dialog({ open, onOpenChange, title, description, children, footer, size = 'md', icon: Icon }) {
-  const w = { sm: 'sm:max-w-md', md: 'sm:max-w-lg', lg: 'sm:max-w-2xl', xl: 'sm:max-w-3xl' }[size]
+  const w = { sm: 'sm:max-w-[420px]', md: 'sm:max-w-[480px]', lg: 'sm:max-w-[560px]', xl: 'sm:max-w-3xl' }[size]
   return (
     <RDialog.Root open={open} onOpenChange={onOpenChange}>
       <RDialog.Portal>
-        <RDialog.Overlay className="anim-fade fixed inset-0 z-50 bg-[var(--overlay)] backdrop-blur-sm" />
+        <RDialog.Overlay className="anim-fade fixed inset-0 z-50 bg-[var(--overlay)]" />
         <RDialog.Content
           aria-describedby={description ? undefined : undefined}
           className={cn('fixed inset-x-0 bottom-0 z-50 flex max-h-[92dvh] flex-col rounded-t-[28px] bg-card shadow-glow-strong outline-none sm:inset-auto sm:top-1/2 sm:left-1/2 sm:max-h-[88vh] sm:w-[calc(100%-2rem)] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-3xl', w,
             'anim-pop max-sm:animate-[ft-up_.28s_cubic-bezier(.2,.8,.2,1)]')}
         >
           <div className="mx-auto mt-2.5 h-1.5 w-10 shrink-0 rounded-full bg-line sm:hidden" />
-          <div className="flex items-start justify-between gap-3 px-5 pt-4 pb-3 sm:px-6 sm:pt-6">
+          <div className="flex items-start justify-between gap-3 px-5 pt-4 pb-3 sm:pt-5">
             <div className="flex min-w-0 items-start gap-3">
-              {Icon && <span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-teal-soft text-teal"><Icon className="size-5" /></span>}
+              {Icon && <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-card-2 text-muted"><Icon className="size-[18px]" /></span>}
               <div className="min-w-0">
-                <RDialog.Title className="font-display text-lg font-extrabold text-fg sm:text-xl">{title}</RDialog.Title>
+                <RDialog.Title className="text-[17px] font-semibold text-fg">{title}</RDialog.Title>
                 {description ? <RDialog.Description className="mt-0.5 text-[13px] text-muted">{description}</RDialog.Description> : <RDialog.Description className="sr-only">{title}</RDialog.Description>}
               </div>
             </div>
             <RDialog.Close asChild><Button variant="ghost" size="icon-sm" aria-label="Close"><X className="size-5" /></Button></RDialog.Close>
           </div>
-          <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-4 sm:px-6">{children}</div>
-          {footer && <div className="pb-safe flex flex-wrap items-center justify-end gap-2 border-t border-line px-5 py-3.5 sm:px-6">{footer}</div>}
+          <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-4">{children}</div>
+          {footer && <div className="pb-safe flex flex-wrap items-center justify-end gap-2 border-t border-line px-5 py-3.5">{footer}</div>}
         </RDialog.Content>
       </RDialog.Portal>
     </RDialog.Root>
@@ -203,7 +203,7 @@ export function Menu({ trigger, items, align = 'end' }) {
 export function EmptyState({ icon: Icon, title, text, action, className }) {
   return (
     <div className={cn('flex flex-col items-center px-6 py-10 text-center', className)}>
-      {Icon && <span className="grid size-14 place-items-center rounded-2xl bg-teal-soft text-teal shadow-[0_0_30px_-10px_var(--teal)]"><Icon className="size-7" /></span>}
+      {Icon && <span className="grid size-12 place-items-center rounded-full bg-card-2 text-muted"><Icon className="size-6" /></span>}
       <h4 className="mt-4 font-display text-base font-bold text-fg">{title}</h4>
       {text && <p className="mt-1.5 max-w-sm text-[13.5px] text-muted">{text}</p>}
       {action && <div className="mt-4">{action}</div>}

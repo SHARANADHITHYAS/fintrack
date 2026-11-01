@@ -33,7 +33,7 @@ export default function ExportDialog({ open, onOpenChange, title, defaultPeriod 
 
   const Opt = ({ value, icon: I, label, text }) => (
     <button type="button" onClick={() => setFormat(value)}
-      className={cn('flex cursor-pointer items-center gap-3 rounded-2xl border p-3.5 text-left transition-all', format === value ? 'border-teal bg-teal-soft shadow-[0_0_20px_-8px_var(--teal)]' : 'border-line bg-card-2 hover:border-teal/50')}>
+      className={cn('flex cursor-pointer items-center gap-3 rounded-2xl border p-3.5 text-left transition-all', format === value ? 'border-teal bg-teal-soft' : 'border-line bg-card-2 hover:border-teal/50')}>
       <span className={cn('grid size-10 place-items-center rounded-xl', value === 'xlsx' ? 'bg-inc-soft text-inc' : 'bg-exp-soft text-exp')}><I className="size-5" /></span>
       <span><span className="block text-sm font-bold text-fg">{label}</span><span className="block text-[12px] text-muted">{text}</span></span>
     </button>

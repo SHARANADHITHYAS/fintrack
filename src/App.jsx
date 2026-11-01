@@ -11,7 +11,8 @@ import Investments from './pages/Investments'
 import Cards from './pages/Cards'
 import CardDetail from './pages/CardDetail'
 import SettingsPage from './pages/Settings'
-import Accounts from './pages/Accounts'
+import Accounts, { AccountDetail } from './pages/Accounts'
+import Buckets from './pages/Buckets'
 
 function AppRoutes() {
   const { user } = useAuth()
@@ -36,6 +37,8 @@ function AppRoutes() {
           <Route path="cards/:id" element={<CardDetail />} />
           <Route path="settings" element={<SettingsPage />} />
           <Route path="accounts" element={<Accounts />} />
+          <Route path="accounts/:id" element={<AccountDetail />} />
+          <Route path="buckets" element={<Buckets />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

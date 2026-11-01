@@ -8,12 +8,21 @@ import { accountName, findCategory, isEmiPurchase, totals } from '../lib/finance
 import { CAT, FRIEND_CC, modeLabel } from '../lib/constants'
 import { cn, fmtDateShort, money, monthKey, monthLabel } from '../lib/utils'
 
+const bucketName = (data, t) => (data.buckets || []).find((b) => b.id === t.bucketId)?.name || 'bucket'
+
 export function txnTitle(data, t) {
+  if (t.type === 'bucket') return t.description || (t.action === 'deposit' ? `Added to ${bucketName(data, t)}` : t.action === 'withdraw' ? `Taken back from ${bucketName(data, t)}` : `Bought with ${bucketName(data, t)}`)
   const c = findCategory(data, t.categoryId)
   return t.description || (t.subcategory ? `${c.name} · ${t.subcategory}` : c.name)
 }
 
 export function txnSubtitle(data, t) {
+  if (t.type === 'bucket') {
+    const acc = accountName(data, t.mode, t.accountId) || modeLabel(t.mode)
+    if (t.action === 'deposit') return `${acc} → ${bucketName(data, t)} bucket`
+    if (t.action === 'withdraw') return `${bucketName(data, t)} bucket → ${acc}`
+    return `Paid from ${bucketName(data, t)} bucket${t.categoryId ? ` · ${findCategory(data, t.categoryId).name}` : ''} · not counted as expense`
+  }
   const c = findCategory(data, t.categoryId)
   const parts = []
   if (t.description) parts.push(t.subcategory ? `${c.name} · ${t.subcategory}` : c.name)
@@ -29,23 +38,27 @@ export function txnSubtitle(data, t) {
   return parts.join(' · ')
 }
 
-export function TxnRow({ t, onEdit, compact }) {
+export function TxnRow({ t, onEdit, compact, effect }) {
   const { data, deleteTransaction, deleteImpact } = useData()
   const toast = useToast()
   const [confirm, setConfirm] = useState(false)
   const c = findCategory(data, t.categoryId)
   const emiP = isEmiPurchase(t)
-  const color = t.type === 'income' ? 'text-inc' : t.type === 'transfer' ? 'text-net' : 'text-exp'
-  const sign = t.type === 'income' ? '+' : t.type === 'transfer' ? '↔' : '−'
+  const isBucket = t.type === 'bucket'
+  let color = t.type === 'income' ? 'text-inc' : t.type === 'transfer' ? 'text-net' : isBucket ? 'text-violet' : 'text-exp'
+  let sign = t.type === 'income' ? '+' : t.type === 'transfer' ? '↔' : isBucket ? (t.action === 'deposit' ? '→' : t.action === 'withdraw' ? '←' : '•') : '−'
+  // In an account's own ledger, show money in (+) or out (−) of that account
+  if (effect != null) { sign = effect >= 0 ? '+' : '−'; color = effect >= 0 ? 'text-inc' : 'text-exp' }
   return (
     <div className="group flex items-center gap-3 px-3 py-3 transition-colors hover:bg-card-2/70 sm:px-4">
-      <CategoryBubble icon={t.type === 'transfer' ? 'ArrowLeftRight' : c.icon} color={t.type === 'transfer' ? 'var(--net)' : c.color} />
+      <CategoryBubble icon={t.type === 'transfer' ? 'ArrowLeftRight' : isBucket ? 'PiggyBank' : c.icon} color={t.type === 'transfer' ? 'var(--net)' : isBucket ? 'var(--violet)' : c.color} />
       <div className="min-w-0 flex-1">
         <div className="flex min-w-0 items-center gap-1.5">
           <span className="truncate text-[14px] font-semibold text-fg">{txnTitle(data, t)}</span>
           {t.sipIndex != null && <Badge tone="inv" className="hidden sm:inline-flex"><Repeat className="size-3" />SIP</Badge>}
           {t.emiIndex && <Badge tone="violet" className="hidden sm:inline-flex"><CalendarClock className="size-3" />EMI</Badge>}
           {emiP && <Badge tone="violet" className="hidden sm:inline-flex">Converted to EMI</Badge>}
+          {isBucket && <Badge tone="violet" className="hidden sm:inline-flex">Bucket</Badge>}
           {t.accountId === FRIEND_CC && <Badge tone="muted" className="hidden sm:inline-flex"><Users className="size-3" />Friend CC</Badge>}
         </div>
         <div className="truncate text-[12px] text-muted">
@@ -53,7 +66,7 @@ export function TxnRow({ t, onEdit, compact }) {
         </div>
       </div>
       <div className="text-right">
-        <div className={cn('tabular text-[14.5px] font-bold whitespace-nowrap', color, emiP && 'opacity-60')}>{sign}{money(t.amount).replace('−', '')}</div>
+        <div className={cn('tabular text-[14.5px] font-bold whitespace-nowrap', color, emiP && 'opacity-60')}>{sign}{money(effect != null ? Math.abs(effect) : t.amount).replace('−', '')}</div>
         {emiP && <div className="text-[10.5px] text-faint">on EMI</div>}
       </div>
       {!compact && (
